@@ -10,6 +10,8 @@ DB: Opensearch
 
 Questions:
   - Where to run OpenSearch? Asure or AWS free trials and run it there
+  - What is the point of paragraphing the document if the average abstract size (in tokens) is 220?
+  - Are we allowed to use other data such as metadata, document content etc?
 
 First Task: DB
   1. Find appropiate way to represent documents (\n, paragraphs, find right size for the documents etc.) - trial and error
