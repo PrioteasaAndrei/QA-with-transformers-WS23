@@ -10,7 +10,7 @@ DB: Opensearch
 
 Questions:
   - Where to run OpenSearch? Asure or AWS free trials and run it there
-  - What is the point of paragraphing the document if the average abstract size (in tokens) is 220?
+  - What is the point of paragraphing the document if the average abstract size (in tokens) is 220? Does that mean that a single embedding for the whole paragraph cannot be used for STS?
   - Are we allowed to use other data such as metadata, document content etc?
 
 First Task: DB
