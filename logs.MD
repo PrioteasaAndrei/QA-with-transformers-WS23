@@ -5,3 +5,6 @@
 
 TODOs: 
 -create vector embeddings and update the index function
+-lowercase everything in the dataset
+-check aproaches to STS based on paragraphs or whole paragraph or CLS token or splitting the abstract in chunks using voronoi cells
+-remove \n and replace them with space (may have already been done in the parsing of the dataset)
