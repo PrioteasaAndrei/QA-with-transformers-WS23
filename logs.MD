@@ -4,7 +4,16 @@
 -successfully posted some pub-med articles in a simple form to check that it works
 
 TODOs: 
--create vector embeddings and update the index function
 -lowercase everything in the dataset
 -check aproaches to STS based on paragraphs or whole paragraph or CLS token or splitting the abstract in chunks using voronoi cells
--remove \n and replace them with space (may have already been done in the parsing of the dataset)
+
+
+02 January 2024 13:19:38
+
+- used the proposed pubmed-bert model for the encodings and pushed all the data to the database
+-performed a simple QA query to see if it works
+- used a splitting strategy for chunks as seen in the last tutorial
+
+TODOs:
+- see Name Entity Recognition approaches
+- add metadata to serach fields (e.g search by year)

@@ -3,81 +3,12 @@ from tqdm import tqdm
 from datetime import datetime
 
 
-## NOTE: for reference
-def arxiv_index_mapping():
-    """
-    Creates a mapping object for the OpenSearch index.
-
-    This function defines the schema and configuration for the index, including:
-
-    * Number of shards and replicas
-    * KNN functionality
-    * Data types for different fields (text, date, keyword, etc.)
-    * Analyzers for text fields
-    * KNN vector configuration (dimension, method, parameters)
-
-    Args:
-        None (function operates on built-in variables)
-
-    Returns:
-        os_mapping: A dictionary representing the OpenSearch index mapping.
-    """
-
-    os_mapping = {
-        "settings": {
-            "index": {
-                "number_of_shards": 1,
-                "number_of_replicas": 1,
-                "knn": True,  # enables K-Nearest Neighbors search
-            }
-        },
-        "mappings": {
-            "properties": {
-                "title": {
-                    "type": "text",
-                    "analyzer": "standard",  # standard text analyzer for title
-                },
-                "vector": {
-                    "type": "knn_vector",  # KNN vector field for embedding data
-                    "dimension": 768,  # dimension of the embedding vectors
-                    "method": {
-                        "engine": "nmslib", # nmslib engine
-                        "name": "hnsw", # HNSW algorithm for KNN search
-                        "space_type": "cosinesimil",  # cosine similarity distance metric
-                        "parameters": {
-                            "ef_construction": 40,  # construction parameters
-                            "m": 8,
-                        },
-                    },
-                },
-                "publishedDate": {
-                    "type": "date",  # date type for publication date
-                },
-                "authors": {
-                    "type": "text",  # text field for author names
-                },
-                "url": {
-                    "type": "keyword",  # keyword field for the URL
-                },
-                "text_chunk_id": {
-                    "type": "integer",  # integer field for text chunk ID
-                },
-                "arxiv_text": {
-                    "type": "text",  # text field for the arXiv abstract
-                    "analyzer": "standard",  # standard text analyzer for the abstract
-                },
-            }
-        },
-    }
-
-    return os_mapping
-
-
 
 
 def pubmed_index_mapping():
     '''
-    ## TODO: add mapping for pubmed
+    Defines the OpenSearch index mapping for the PubMed dataset.
+
     '''
     os_mapping = {
         "settings": {
@@ -93,19 +24,19 @@ def pubmed_index_mapping():
                     "type": "text",
                     "analyzer": "standard",  # standard text analyzer for title
                 },
-                # "vector": {
-                #     "type": "knn_vector",  # KNN vector field for embedding data
-                #     "dimension": 768,  # dimension of the embedding vectors
-                #     "method": {
-                #         "engine": "nmslib", # nmslib engine
-                #         "name": "hnsw", # HNSW algorithm for KNN search
-                #         "space_type": "cosinesimil",  # cosine similarity distance metric
-                #         "parameters": {
-                #             "ef_construction": 40,  # construction parameters
-                #             "m": 8,
-                #         },
-                #     },
-                # },
+                "vector": {
+                    "type": "knn_vector",  # KNN vector field for embedding data
+                    "dimension": 384,  # dimension of the embedding vectors
+                    "method": {
+                        "engine": "nmslib", # nmslib engine
+                        "name": "hnsw", # HNSW algorithm for KNN search
+                        "space_type": "cosinesimil",  # cosine similarity distance metric
+                        "parameters": {
+                            "ef_construction": 40,  # construction parameters
+                            "m": 8,
+                        },
+                    },
+                },
                 "pubmed_text": {
                     "type": "text",  # text field for the arXiv abstract
                     "analyzer": "standard",  # standard text analyzer for the abstract
@@ -174,8 +105,8 @@ def opensearch_connection(index_name,connection_settings):
 
     print("Connected to OpenSearch",database_connection.info())
 
-    # Define index mapping using the `arxiv_index_mapping` function
-    os_index_mapping = arxiv_index_mapping()
+    # Define index mapping using the `pubmed_index_mapping` function
+    os_index_mapping = pubmed_index_mapping()
 
     # Create the index if it doesn't exist with the defined mapping
     print("Creating index...")
@@ -200,23 +131,13 @@ def loadArticlesVector(index_connection, article_info, index_name):
       index_name: Name of the OpenSearch index
   """
   for article in tqdm(article_info, desc="Saving articles to database"):
-    # parse and format published date
-    date_object = datetime.strptime(article[2]["published"], "%Y-%m-%d %H:%M:%S")
-    iso_formatted_date = date_object.isoformat()
 
-    # create document object with arXiv abstract data
     doc = {
-        "title": article[2]["title"],
+        "title": article[0]['title'],
         "vector": article[1],
-        "authors": article[2]["authors"],
-        "url": article[2]["url"],
-        "text_chunk_id": article[2]["text_chunk_id"],
-        "publishedDate": iso_formatted_date,
-        "arxiv_text": article[2]["arxiv_text"],
+        "pubmed_text": article[0]['chunk_text'],
+        'chunk_id': article[0]['chunk_id'],
     }
 
-    # extract ID
-    _id = article[0]
-
-    # index the document in OpenSearch with provided ID
-    index_connection.index(index=index_name, body=doc, id=_id)
+    ## TODO: add id to doc and index with given id
+    index_connection.index(index=index_name, body=doc)
