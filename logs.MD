@@ -4,7 +4,7 @@
 -successfully posted some pub-med articles in a simple form to check that it works
 
 TODOs: 
--lowercase everything in the dataset
+-lowercase everything in the dataset X
 -check aproaches to STS based on paragraphs or whole paragraph or CLS token or splitting the abstract in chunks using voronoi cells
 
 
