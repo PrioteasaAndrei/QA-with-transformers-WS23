@@ -30,6 +30,3 @@ Dataset: https://huggingface.co/datasets/prio7777777/pubmed-demo
 
 **************
 
-General Ideas:
-
-In doc structure hold both the vector embedding, but also the title and abstract as text to be analyzed (see Part 2 of the last tutorial).
