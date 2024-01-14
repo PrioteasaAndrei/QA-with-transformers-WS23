@@ -15,7 +15,7 @@ def pubmed_index_mapping():
             "index": {
                 "number_of_shards": 1,
                 "number_of_replicas": 1,
-                # "knn": True,  # enables K-Nearest Neighbors search
+                "knn": True,  # enables K-Nearest Neighbors search
             }
         },
         "mappings": {
@@ -26,7 +26,7 @@ def pubmed_index_mapping():
                 },
                 "vector": {
                     "type": "knn_vector",  # KNN vector field for embedding data
-                    "dimension": 384,  # dimension of the embedding vectors
+                    "dimension": 768,  # dimension of the embedding vectors
                     "method": {
                         "engine": "nmslib", # nmslib engine
                         "name": "hnsw", # HNSW algorithm for KNN search
@@ -37,10 +37,23 @@ def pubmed_index_mapping():
                         },
                     },
                 },
+                "publishedDate": {
+                    "type": "date",  # date type for publication date
+                },
+                "authors": {
+                    "type": "text",  # text field for author names
+                },
+                "journal": {
+                    "type": "text",  # text field for journal names
+                },
+                "authors_info": {
+                    "type": "text",  # text field for author information
+                },
                 "pubmed_text": {
                     "type": "text",  # text field for the arXiv abstract
                     "analyzer": "standard",  # standard text analyzer for the abstract
                 },
+                
             }
         },
     }
@@ -132,11 +145,20 @@ def loadArticlesVector(index_connection, article_info, index_name):
   """
   for article in tqdm(article_info, desc="Saving articles to database"):
 
+    published_date = article[0]['date'] 
+
+    if article[0]['date'] == 'no published date':
+        published_date = None
+
     doc = {
         "title": article[0]['title'],
         "vector": article[1],
         "pubmed_text": article[0]['chunk_text'],
         'chunk_id': article[0]['chunk_id'],
+        'publishedDate': published_date,
+        'authors': article[0]['authors'],
+        'journal': article[0]['journal'],
+        'authors_info': article[0]['authors_info'],
     }
 
     ## TODO: add id to doc and index with given id
