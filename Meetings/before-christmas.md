@@ -20,7 +20,7 @@ First Task: DB
   2. Do information retrieval based on semantic search that retrieves the right paragraphs at first. (extraction QA)
 
 
-First Mileston: 11th January
+First Milestone: 11th January
   - need data
   - opensearch working (extractive QA)
 
