@@ -163,3 +163,33 @@ def loadArticlesVector(index_connection, article_info, index_name):
 
     ## TODO: add id to doc and index with given id
     index_connection.index(index=index_name, body=doc)
+
+
+
+def create_search_body(query_embedding,min_score=1.45):
+   body = {
+        # **Query:** match all documents and score them based on a custom script
+        "query": {
+            "script_score": {
+                # match all documents
+                "query": {
+                    "match_all": {}
+                },
+                # define a script to calculate the score
+                "script": {
+                    # since cosine similarity ranges between -1 and 1 and
+                    # opensearch is not able to process negative cosine similarity score
+                    # therefore +1.0 is added
+                    "source": "cosineSimilarity(params.queryVector, doc['vector']) + 1.0",
+                    # pass the query vector as a parameter to the script
+                    "params": {
+                        "queryVector": query_embedding
+                    }
+                }
+            }
+        },
+        # filter results with a minimum score of 1.45
+        "min_score": min_score
+    }
+   
+   return body

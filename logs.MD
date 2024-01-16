@@ -29,6 +29,8 @@ TODOs:
 
 TODOs:
 -check this out for valdiation: https://huggingface.co/datasets/pubmed_qa
-- build top 5 recall function for evaluation dataset
 - try to fix the other chunking mechanism
 -hybrid search
+
+
+14 January 2024 18:20:47
