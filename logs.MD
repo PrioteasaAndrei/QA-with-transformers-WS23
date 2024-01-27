@@ -34,3 +34,23 @@ TODOs:
 
 
 14 January 2024 18:20:47
+
+
+forgot to write stuff here
+
+16 January 2024 21:46:07
+
+TODOS:
+- generate answer to store in index using gpt 3.5 see last tutorial
+
+
+17 January 2024 14:45:35
+
+
+https://opensearch.org/blog/semantic-science-benchmarks/
+https://opensearch.org/docs/latest/query-dsl/compound/hybrid
+
+18 January 2024 13:26:09
+
+Starting the migration to LangChain
+Considering switching to ElasticSearch as LangChain has better support for that

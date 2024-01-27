@@ -1,8 +1,63 @@
 from opensearchpy import OpenSearch
 from tqdm import tqdm
 from datetime import datetime
+from langchain.schema import BaseRetriever, Document
+from typing import List
+import langchain_core
+
+def convert_opensearch_doc_to_langchain(retrieved_documents):
+    """
+    Convert an OpenSearch document to a LangChain document.
+
+    Args:
+        doc: OpenSearch retrieved documents.
+
+    Returns:
+        A LangChain document.
+    """
+
+    # for result in retrieved_documents["hits"]["hits"]:
+        
 
 
+    # langchain_document = Document(
+    #     id=doc['chunk_id'],  # Assuming 'chunk_id' is the unique identifier
+    #     title=doc.get('title', ''),
+    #     score=0.0,  # You may set the score based on your retrieval logic
+    #     content=doc.get('pubmed_text', ''),
+    #     published_date=doc.get('publishedDate', ''),
+    #     authors=doc.get('authors', []),
+    #     journal=doc.get('journal', ''),
+    #     authors_info=doc.get('authors_info', {}),
+    #     # Add more fields based on your document structure
+    # )
+
+    # return langchain_document
+    pass
+
+# class OpenSearchRetriever(BaseRetriever):
+#     """Retriever that uses OpenSearch's vector store for retrieving documents."""
+
+#     def _get_relevant_documents(
+#         self,
+#         query: str,
+#         *,
+#         run_manager: langchain_core.callbacks.manager.CallbackManagerForRetrieverRun,
+#     ) -> List[Document]:
+#         """
+#         Get the relevant documents for a given query using OpenSearch's vector store.
+
+#         Args:
+#             query: The query to search for.
+
+#         Returns:
+#             A list of relevant documents.
+#         """
+#         # Use OpenSearch's vector store to get relevant documents
+#         # This is a placeholder and should be replaced with actual code
+#         documents = opensearch_vector_store_search(query)
+
+#         return documents
 
 
 def pubmed_index_mapping():
