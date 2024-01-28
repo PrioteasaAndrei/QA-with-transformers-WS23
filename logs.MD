@@ -54,3 +54,15 @@ https://opensearch.org/docs/latest/query-dsl/compound/hybrid
 
 Starting the migration to LangChain
 Considering switching to ElasticSearch as LangChain has better support for that
+
+
+28 January 2024 17:28:59
+
+-began migration to elastich search and langchain, deployed on a free trial cloud
+-implemented a mock up hybrid search using an ensemble retriever
+
+TODO:
+
+- figure out how to create a custom index with many vector fields (e.g for generated questions, title) and how to use an ensemble retriever for all of them and combine results
+- how to do elastic search query from langchain
+- Hypothetical Questions with llama 2 and put it in a new index, then combine results
