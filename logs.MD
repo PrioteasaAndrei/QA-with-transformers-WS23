@@ -65,4 +65,15 @@ TODO:
 
 - figure out how to create a custom index with many vector fields (e.g for generated questions, title) and how to use an ensemble retriever for all of them and combine results
 - how to do elastic search query from langchain
-- Hypothetical Questions with llama 2 and put it in a new index, then combine results
+- Hypothetical Questions with llama 2 and put it in a new index, then combine results (PS llama 2 7B takes too much for inference)
+
+
+31 January 2024 13:42:18
+
+Todays plan:
+- finish the rag architecture in its simplest form
+- do some evaluation at the end like in the last 
+
+02 February 2024 15:58:03
+
+-same error locally seems to be related to the embedding but I literally have no idea whats going on.
