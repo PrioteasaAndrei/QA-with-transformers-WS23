@@ -72,4 +72,8 @@ TODO:
 
 Todays plan:
 - finish the rag architecture in its simplest form
-- do some evaluation at the end like in the last assigment
+- do some evaluation at the end like in the last 
+
+02 February 2024 15:58:03
+
+-same error locally seems to be related to the embedding but I literally have no idea whats going on.
