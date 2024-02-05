@@ -77,3 +77,25 @@ Todays plan:
 02 February 2024 15:58:03
 
 -same error locally seems to be related to the embedding but I literally have no idea whats going on.
+
+03 February 2024 18:25:42
+
+Error was fixed. It was due to some weird API call.
+
+Problems with IR evaluation:
+- no way to know which are the relevant documents for one query, other than manual inspection
+- retrieved document may be correct but paragraph may be shifted to the left or right
+
+For now lets just evaluate that the IR returns the relevant documents, regardless of the correct paragraph.
+
+-also need to do query augumentation
+
+What I did today:
+- i was thinking we can use the results retrieved directly from pubmed using their api as a baseline of which documents are relavant or not for a given query, but it seems that pubmed uses only some keyword searches and not vector searches. In that sense our returned document are more relevant as they use synonims and context etc. Spent about 1.5 h on this
+
+-investigated different evaluation mechanisms for when labeled data is not present. Just ended up with the conclusion that there just arent any. Still need to investigate more but no result has been found.
+
+-created a new index with 50 token chunks into elastic_search
+
+- together with @Mara completed the RAG and debugged something that took around 3h total
+
