@@ -99,3 +99,9 @@ What I did today:
 
 - together with @Mara completed the RAG and debugged something that took around 3h total
 
+06 February 2024 22:49:34
+
+-switching initial data retrieval system using the langchain API
+-using RAGAs for the validation and synthethic test data generation
+
+
