@@ -105,3 +105,7 @@ What I did today:
 -using RAGAs for the validation and synthethic test data generation
 
 
+07 February 2024 22:25:12
+
+Approach: using small chunking size (50) and feed directly to generator or use big chunking size (400) -> summary -> generator
+For this we need a complet system in order to report the metrics
