@@ -99,3 +99,29 @@ What I did today:
 
 - together with @Mara completed the RAG and debugged something that took around 3h total
 
+07 February 2024 09:46
+
+Here is a list of things we could try out:
+
+- Inference time is slow, but we could optimize it through the following methods:
+    - Use FlashAttention-2 for the model generating the answer. Not all models support it, llama does.
+    - Use BetterTransformer.
+    - Use a quantization library like bitsandbytes.
+    Check https://huggingface.co/docs/transformers/perf_infer_gpu_one#bitsandbytes.
+
+- Add reference to the source documents either through the prompt for the generative model (see https://github.com/langchain-ai/langchain/blob/master/cookbook/qa_citations.ipynb) or by matching parts of generated response to the original text chuncks.
+
+- Try several generative models (mostly open source):
+    - meta-llama/Llama-2-13b-chat-hf
+    - meta-llama/Llama-2-7b-chat-hf
+    - mistralai/Mistral-7B-v0.1 (Mistral-7B-v0.1 is Mistral AI’s first Large Language Model (LLM))
+    - mistralai/Mixtral-8x7B-v0.1 (Mistral AI’s second Large Language Model (LLM))
+    - Rocketknight1/falcon-rw-1b 
+    - gpt-3.5-turbo
+    - gpt-4 (no longer open source, but probably covered by subscription)
+
+- Query transformation
+
+- Play with different chunck sizes and text splitters.
+
+
