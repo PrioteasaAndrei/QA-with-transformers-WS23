@@ -34,3 +34,4 @@ Milestone 2
 
 See this for a hybrid search query: https://gist.github.com/ManZzup/1109d4c1f6b8bc48b60a67983dfbd0fd
 See this for one end-to-end evaluation framework: https://github.com/explodinggradients/ragas
+See this for tutorial to ragas: https://towardsdatascience.com/evaluating-rag-applications-with-ragas-81d67b0ee31a
