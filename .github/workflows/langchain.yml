@@ -1,0 +1,18 @@
+name: langchain branch deployment
+on:
+  push:
+    branches: [langchain-test]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Python 3.7
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.7
+      - run: pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
+      - run: cd deploy/; python deploy.py; echo 'deployed'
+        env:
+          COLAB_USER: ${{ secrets.COLAB_USER }}
+          COLAB_PASSWORD: ${{ secrets.COLAB_PASSWORD }}
