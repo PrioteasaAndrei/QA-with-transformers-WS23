@@ -18,12 +18,26 @@ from transformers import AutoConfig, AutoModelForCausalLM
 import transformers
 from transformers import LlamaTokenizer
 from langchain.llms import HuggingFacePipeline
+import os
+from tqdm import tqdm
+from datasets import load_dataset
+from elasticsearch import Elasticsearch
+from langchain_community.vectorstores import ElasticsearchStore
+from langchain_community.document_loaders import TextLoader
+from sentence_transformers import SentenceTransformer
+from langchain.text_splitter import SentenceTransformersTokenTextSplitter
+from langchain.text_splitter import CharacterTextSplitter
+from langchain.text_splitter import SpacyTextSplitter
+from langchain_community.embeddings import HuggingFaceInferenceAPIEmbeddings
+import pandas as pd
+from datasets import Dataset, Sequence, Value
+import csv
 
-## TODO: check that it works
+
 def prepare_llm(auth_token,model_id="meta-llama/Llama-2-13b-chat-hf"):
 
-    bitsAndBites_config = BitsAndBytesConfig(load_in_4bit = True, \
-                                            bnb_4bit_compute_dtype = bfloat16, \
+    bitsAndBites_config = BitsAndBytesConfig(load_in_4bit = True, 
+                                            bnb_4bit_compute_dtype = bfloat16, 
                                             bnb_4bit_use_double_quant = True)
 
     model_config = AutoConfig.from_pretrained(model_id, use_auth_token=auth_token)
@@ -36,6 +50,9 @@ def prepare_llm(auth_token,model_id="meta-llama/Llama-2-13b-chat-hf"):
         device_map='auto',
         token=auth_token
     )
+
+    ##TODO: check that it works
+    model = model.to_bettertransformer()
 
     model.eval()# we only use the model for inference
     print(f"Model loaded ")
@@ -58,7 +75,6 @@ def prepare_llm(auth_token,model_id="meta-llama/Llama-2-13b-chat-hf"):
     return llm
 
 
-## TODO: check that it works
 def call_similartiy(retriever,query, top_k=5,is_ensemble=False):
     '''
     Call the similarity method of the retriever
@@ -69,11 +85,11 @@ def call_similartiy(retriever,query, top_k=5,is_ensemble=False):
         return retriever.similarity(query,top_k)
 
 
-## TODO: check that it works
 def run_config(elastic_vector_search : ElasticsearchStore,
                use_ensemble_retriever: bool,
                verbose: bool = True,
                config_name: str = 'default_config',
+               save: bool = False,
                **kwargs):
     '''
     Runs a configuration of the RAG pipeline and returns the RAGAS evaluation metrics.
@@ -90,8 +106,6 @@ def run_config(elastic_vector_search : ElasticsearchStore,
         HUGGINGFACE_DATASET_NAME: str
         text_splitter: TextSplitter
         llm: HuggingFacePipeline
-
-
     '''
     index_name = kwargs.get('index_name', None)
     evaluation_dataset_path = kwargs.get('evaluation_dataset_path', None)
@@ -99,9 +113,10 @@ def run_config(elastic_vector_search : ElasticsearchStore,
     HUGGINGFACE_DATASET_NAME = kwargs.get('HUGGINGFACE_DATASET_NAME', None)
     QA_VALIDATION_TOKEN = kwargs.get('QA_VALIDATION_TOKEN', None)
     text_splitter = kwargs.get('text_splitter', None)
-    llm = prepare_llm(HUGGINGFACE_TOKEN,model_id="meta-llama/Llama-2-13b-chat-hf")
+    llm = kwargs.get('llm', None)
+    save_path = kwargs.get('save_path', None)
 
-    if index_docs is None or evaluation_dataset_path is None or HUGGINGFACE_TOKEN is None or HUGGINGFACE_DATASET_NAME is None or llm is None:
+    if index_name is None or evaluation_dataset_path is None or HUGGINGFACE_TOKEN is None or HUGGINGFACE_DATASET_NAME is None or llm is None:
         raise ValueError("Missing parameters")
     
     if not elastic_vector_search.client.indices.exists(index=index_name):
@@ -110,7 +125,7 @@ def run_config(elastic_vector_search : ElasticsearchStore,
     if verbose:
         print(elastic_vector_search.client.info())
 
-    retriever = elastic_vector_search.as_retriever()
+    retriever = elastic_vector_search
 
     ## define RAG pipeline
 
@@ -160,6 +175,8 @@ def run_config(elastic_vector_search : ElasticsearchStore,
     ## iterate with tqdm over dataset
 
     answers = []
+    
+    ## TODO: vecotrize this
     for example in tqdm(eval_dataset,desc="generate RAG answers"):
         query = example['question']
         ragas_answer_gpt = example['ground_truth'][0]
@@ -171,12 +188,51 @@ def run_config(elastic_vector_search : ElasticsearchStore,
 
         answer = rag_pipeline(query)
         answers.append(answer)
+    
+    if save:
+        field_names = ['query','result']
 
-    ## TODO: evaluate RAGAS
+        # Write the list of dictionaries to a CSV file
+        with open(save_path, 'w', newline='') as csv_file:
+            writer = csv.DictWriter(csv_file, fieldnames=field_names)
+
+            # Write the header
+            writer.writeheader()
+
+            # Write the data
+            writer.writerows(answers)
+
+    ## list[{'query': str,'result':str}]
     return answers
 
 
+def testset_to_validation(save=False,**kwargs):
 
+    QA_VALIDATION_DATASET = kwargs.get('QA_VALIDATION_DATASET', None)
+    QA_VALIDATION_TOKEN = kwargs.get('QA_VALIDATION_TOKEN', None)
+
+    eval_dataset = load_dataset(QA_VALIDATION_DATASET,token=QA_VALIDATION_TOKEN)['train']
+
+    df = pd.read_csv('./rag_validation_answers_400.csv')
+
+    ## join them on the query vs question
+
+    result_df = pd.merge(df, eval_dataset.to_pandas(), left_on='query', right_on='question', how='inner')
+
+    result_df = result_df.drop(columns=['query','question_type','episode_done'])
+    ## first parse the ground_truth and ground_truth context by \n
+    columns_mapping = {'question': 'question', 'result': 'answer', 'ground_truth': 'ground_truths','ground_truth_context':'contexts'}
+    result_df = result_df.rename(columns=columns_mapping)
+    
+    result_df['contexts'] = result_df['contexts'].apply(lambda x: [x])
+    result_df['ground_truths'] = result_df['ground_truths'].apply(lambda x: [x])
+
+    if save:
+        result_df.to_csv('validation_400.csv',index=False)
+
+    result_df_dataset = Dataset.from_pandas(result_df)
+        
+    return result_df_dataset
 
 
 
