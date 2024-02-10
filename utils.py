@@ -210,10 +210,12 @@ def testset_to_validation(save=False,**kwargs):
 
     QA_VALIDATION_DATASET = kwargs.get('QA_VALIDATION_DATASET', None)
     QA_VALIDATION_TOKEN = kwargs.get('QA_VALIDATION_TOKEN', None)
+    save_path_answers = kwargs.get('save_path', None)
+    save_path_result = kwargs.get('save_path_result', None)
 
     eval_dataset = load_dataset(QA_VALIDATION_DATASET,token=QA_VALIDATION_TOKEN)['train']
 
-    df = pd.read_csv('./rag_validation_answers_400.csv')
+    df = pd.read_csv(save_path_answers)
 
     ## join them on the query vs question
 
@@ -228,7 +230,7 @@ def testset_to_validation(save=False,**kwargs):
     result_df['ground_truths'] = result_df['ground_truths'].apply(lambda x: [x])
 
     if save:
-        result_df.to_csv('validation_400.csv',index=False)
+        result_df.to_csv(save_path_result,index=False)
 
     result_df_dataset = Dataset.from_pandas(result_df)
         
