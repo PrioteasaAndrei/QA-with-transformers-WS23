@@ -3,17 +3,18 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
 from google.oauth2 import service_account
-
+import json
+import os
 
 def deployment():
-  creds = service_account.Credentials.from_service_account_file('../../secret.json')
+  creds = service_account.Credentials.from_service_account_info(json.loads(os.getenv('DRIVE_CONFIG')))
 
   try:
     service = build("drive", "v3", credentials=creds)
     file_metadata = {
       "name": "main_upstream.ipynb",
-      'parents':['parent_folder_id']
-      }
+      'parents':[os.getenv('PARENT_FOLDER_ID')]
+    }
     media = MediaFileUpload("../main.ipynb")
     file = (
         service.files()

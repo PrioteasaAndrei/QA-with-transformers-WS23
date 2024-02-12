@@ -12,7 +12,9 @@ jobs:
         with:
           python-version: 3.7
       - run: pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
+      - run: pip install google                          
+      - run: pip install google-api-core
       - run: cd deploy/; python deploy.py; echo 'deployed'
         env:
-          COLAB_USER: ${{ secrets.COLAB_USER }}
-          COLAB_PASSWORD: ${{ secrets.COLAB_PASSWORD }}
+          DRIVE_CONFIG: ${{ secrets.DRIVE_CONFIG }}
+          PARENT_FOLDER_ID: ${{ secrets.PARENT_FOLDER_ID }}
