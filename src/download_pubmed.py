@@ -97,7 +97,7 @@ def save_data(output_json_file, data):
     
 
 if __name__ == "__main__":
-    output_json_file = "pubmed_articles.json"
+    output_json_file = ".data/pubmed_articles.json"
     start_dates = ["2013/1/1", "2018/1/1", "2020/1/1", "2021/1/1", "2021/7/1", "2022/1/1", "2022/7/1", "2023/1/1", "2023/7/1"]
     end_dates = ["2017/12/31", "2019/12/31", "2020/12/31", "2021/6/30", "2021/12/31", "2022/6/30", "2022/12/31", "2023/6/30", "2023/12/31"]
     data = []

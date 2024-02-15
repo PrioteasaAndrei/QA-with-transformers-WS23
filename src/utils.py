@@ -1,54 +1,52 @@
 import os
+import pandas as pd
 from tqdm import tqdm
+import csv
+from dotenv import load_dotenv
 from datasets import load_dataset
+from datasets import Dataset, Sequence, Value
 from elasticsearch import Elasticsearch
+from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import ElasticsearchStore
 from langchain_community.document_loaders import TextLoader
 from sentence_transformers import SentenceTransformer
 from langchain.text_splitter import SentenceTransformersTokenTextSplitter
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.text_splitter import SpacyTextSplitter
-from langchain_community.embeddings import HuggingFaceInferenceAPIEmbeddings
 from langchain.retrievers import BM25Retriever, EnsembleRetriever
 from langchain_community.document_loaders import HuggingFaceDatasetLoader
 from langchain.chains import RetrievalQA
 from transformers import BitsAndBytesConfig
 from torch import cuda, bfloat16
-from transformers import AutoConfig, AutoModelForCausalLM
+from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
 import transformers
-from transformers import LlamaTokenizer
 from langchain.llms import HuggingFacePipeline
-import os
-from tqdm import tqdm
-from datasets import load_dataset
-from elasticsearch import Elasticsearch
-from langchain_community.vectorstores import ElasticsearchStore
-from langchain_community.document_loaders import TextLoader
-from sentence_transformers import SentenceTransformer
-from langchain.text_splitter import SentenceTransformersTokenTextSplitter
-from langchain.text_splitter import CharacterTextSplitter
-from langchain.text_splitter import SpacyTextSplitter
-from langchain_community.embeddings import HuggingFaceInferenceAPIEmbeddings
-import pandas as pd
-from datasets import Dataset, Sequence, Value
-import csv
 
 
-def prepare_llm(auth_token,model_id="meta-llama/Llama-2-13b-chat-hf"):
+def prepare_llm(auth_token: str | None, model_id: str = "meta-llama/Llama-2-7b-chat-hf"):
+    '''
+    Creates a text generation pipeline using the referenced model.
 
+    PARAMETERS:
+    auth_token - HuggingFace token
+    model_id - name of Huggingface LLM
+
+    RETURNS:
+    LLM
+    '''
     bitsAndBites_config = BitsAndBytesConfig(load_in_4bit = True, 
                                             bnb_4bit_compute_dtype = bfloat16, 
                                             bnb_4bit_use_double_quant = True)
 
-    model_config = AutoConfig.from_pretrained(model_id, use_auth_token=auth_token)
+    model_config = AutoConfig.from_pretrained(model_id, use_auth_token = auth_token)
 
-    model = transformers.AutoModelForCausalLM.from_pretrained(
+    model = AutoModelForCausalLM.from_pretrained(
         model_id,
-        quantization_config=bitsAndBites_config,
-        trust_remote_code=True,
-        config=model_config,
-        device_map='auto',
-        token=auth_token
+        quantization_config = bitsAndBites_config,
+        trust_remote_code = True,
+        config = model_config,
+        device_map = 'auto',
+        token = auth_token
     )
 
     ##TODO: check that it works
@@ -58,32 +56,69 @@ def prepare_llm(auth_token,model_id="meta-llama/Llama-2-13b-chat-hf"):
     print(f"Model loaded ")
 
     
-    tokenizer = LlamaTokenizer.from_pretrained(model_id, use_auth_token=auth_token)
+    tokenizer = AutoTokenizer.from_pretrained(model_id, use_auth_token = auth_token)
 
     generate_text = transformers.pipeline(
-        model=model, tokenizer=tokenizer,
-        return_full_text=True,
-        task='text-generation',
-        temperature=0.01,
-        max_new_tokens=200,  # max number of tokens to generate in the output
-        repetition_penalty=1.1  # without this output begins repeating
+        model = model, 
+        tokenizer = tokenizer,
+        return_full_text = True,
+        task = 'text-generation',
+        temperature = 0.01,
+        max_new_tokens = 200,  # max number of tokens to generate in the output
+        repetition_penalty = 1.1  # without this output begins repeating
     )
 
     
-    llm = HuggingFacePipeline(pipeline=generate_text)
+    llm = HuggingFacePipeline(pipeline = generate_text)
 
     return llm
 
-
-def call_similartiy(retriever,query, top_k=5,is_ensemble=False):
+def rag_pipeline(model_id: str, 
+                 index_name: str,):
     '''
-    Call the similarity method of the retriever
-    '''
-    if is_ensemble:
-        return retriever.invoke(query,top_k)
-    else:
-        return retriever.similarity(query,top_k)
+    Initializes a RAG pipeline.
 
+    PARAMETERS:
+    model_id - name of generative model
+    index_name - name of document index on Elastic Cloud 
+
+    RETURNS:
+    Chain for question-answering against an index.
+    '''
+    
+    load_dotenv()
+    HUGGINGFACE_TOKEN = os.getenv('HUGGINGFACE_TOKEN')
+    ELASTIC_CLOUD_ID = os.getenv('ELASTIC_CLOUD_ID')
+    ELASTIC_API_KEY = os.getenv('ELASTIC_API_KEY')
+    embedding_model = "NeuML/pubmedbert-base-embeddings"
+    device = 'cuda:0' 
+
+    embeddings = HuggingFaceEmbeddings(
+        model_name = embedding_model,
+        model_kwargs = {'device': device},
+        encode_kwargs = {'device': device}
+    )
+
+    elastic_vector_search = ElasticsearchStore(
+        es_cloud_id = ELASTIC_CLOUD_ID,
+        index_name = index_name,
+        embedding = embeddings,
+        es_api_key = ELASTIC_API_KEY
+    )
+    retriever = elastic_vector_search.as_retriever(search_kwargs={"k":3})
+    llm = prepare_llm(HUGGINGFACE_TOKEN, model_id)
+    
+    print("Preparing RAG pipeline...")
+    rag_pipeline = RetrievalQA.from_chain_type(
+        llm=llm,
+        chain_type="stuff",
+        verbose=True,
+        retriever = retriever,
+        chain_type_kwargs={
+            "verbose": True },
+    )
+    print("RAG pipeline ready.")
+    return rag_pipeline
 
 def run_config(elastic_vector_search : ElasticsearchStore,
                use_ensemble_retriever: bool,
@@ -205,6 +240,14 @@ def run_config(elastic_vector_search : ElasticsearchStore,
     ## list[{'query': str,'result':str}]
     return answers
 
+def call_similartiy(retriever,query, top_k=5,is_ensemble=False):
+    '''
+    Call the similarity method of the retriever
+    '''
+    if is_ensemble:
+        return retriever.invoke(query,top_k)
+    else:
+        return retriever.similarity(query,top_k)
 
 def testset_to_validation(save=False,**kwargs):
 
@@ -238,7 +281,7 @@ def testset_to_validation(save=False,**kwargs):
 
 
 
-def index_docs(data,text_splitter,index_name,**kwargs):
+def index_docs(data, text_splitter, index_name, **kwargs):
         
     ELASTIC_CLOUD_ID = kwargs.get('ELASTIC_CLOUD_ID', None)
     ELASTIC_API_KEY = kwargs.get('ELASTIC_API_KEY', None)
@@ -262,7 +305,7 @@ def index_docs(data,text_splitter,index_name,**kwargs):
 
     db.client.indices.refresh(index=index_name)
 
-    return db,split_data
+    return db, split_data
 
 def create_ensemble_retriever(db,split_data):
     '''
