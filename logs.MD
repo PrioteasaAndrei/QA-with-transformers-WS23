@@ -146,3 +146,14 @@ For this we need a complet system in order to report the metrics
 Added bits and bytes and to_bettertransformer to optimize inference time. Inference time is now about 30s / query. Run the evaluation queries through the RAG with the 400 chunking index on the new dataset and computed the RAGAs metrics. Defined a pipeline for running a configuration and getting the ragas metrics.
 
 Evaluation dataset is available in QA_VALIDATION_DATASET using QA_VALIDATION_TOKEN. See evaluation_IR to see how to apply metric from RAGas on it.
+
+15 February 2024 22:45:35
+
+TODOS:
+-run different configs
+    -for IR (chunking, top k, embedding, retriever (base vs ensemble) )
+    -for generation (summary, model used, prompt)
+-query transformation (research https://python.langchain.com/docs/modules/data_connection/retrievers/self_query/
+    https://blog.langchain.dev/query-transformations/
+    ) / context enrichment
+    
