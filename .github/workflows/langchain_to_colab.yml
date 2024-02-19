@@ -1,0 +1,20 @@
+name: langchain branch deployment from github to colab
+on:
+  push:
+    branches: [langchain-test]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Python 3.7
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.7
+      - run: pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
+      - run: pip install google                          
+      - run: pip install google-api-core
+      - run: cd deploy/; python deploy.py; echo 'deployed'
+        env:
+          DRIVE_CONFIG: ${{ secrets.DRIVE_CONFIG }}
+          PARENT_FOLDER_ID: ${{ secrets.PARENT_FOLDER_ID }}

@@ -1,10 +1,13 @@
-name: langchain branch deployment
+name: langchain branch deployment from colab to github
 on:
   push:
     branches: [langchain-test]
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      
     steps:
       - uses: actions/checkout@v2
       - name: Use Python 3.7
@@ -12,9 +15,10 @@ jobs:
         with:
           python-version: 3.7
       - run: pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
-      - run: pip install google                          
+      - run: pip install google
+      - run: pip install google                             
       - run: pip install google-api-core
       - run: cd deploy/; python deploy.py; echo 'deployed'
         env:
           DRIVE_CONFIG: ${{ secrets.DRIVE_CONFIG }}
-          PARENT_FOLDER_ID: ${{ secrets.PARENT_FOLDER_ID }}
+      - uses: stefanzweifel/git-auto-commit-action@v5
