@@ -4,6 +4,8 @@ from langchain.chains import RetrievalQA
 from langchain_community.vectorstores import ElasticsearchStore
 import transformers
 from transformers import LlamaTokenizer
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.vectorstores import ElasticsearchStore
 import os
 from dotenv import load_dotenv
 
@@ -12,13 +14,20 @@ load_dotenv()
 HUGGINGFACE_TOKEN = os.getenv('HUGGINGFACE_TOKEN')
 HUGGINGFACE_USERNAME = os.getenv('HUGGINGFACE_USERNAME')
 HUGGINGFACE_DATASET_NAME = os.getenv('HUGGINGFACE_DATASET_NAME')
-
-ELASTIC_CLOUD_ID = os.getenv('ELASTIC_CLOUD_ID')
-ELASTIC_API_KEY = os.getenv('ELASTIC_API_KEY')
-
+ELASTIC_CLOUD_ID = os.getenv("ELASTIC_CLOUD_ID")
+ELASTIC_API_KEY = os.getenv("ELASTIC_API_KEY")
 
 @st.cache_resource
 def get_retriever():
+    device = 'cpu' 
+    embeddings = HuggingFaceEmbeddings(
+        model_name="./pubmedbert-base-embeddings",
+        cache_folder= "./pubmedbert-base-embeddings",
+        show_progress=True,
+        model_kwargs={'device': device},
+        encode_kwargs={'device': device}
+    )
+
     index_name = 'qa_project_pubmedbert-50' # previously index="test_pubmed_split"
     elastic_vector_search = ElasticsearchStore(
         es_cloud_id = ELASTIC_CLOUD_ID,
@@ -36,6 +45,7 @@ def create_chain():
         model_id,
         use_auth_token=os.environ.get('HUGGINGFACE_TOKEN')
     )
+    
     model = transformers.AutoModelForCausalLM.from_pretrained(
         model_id,
         trust_remote_code=True,
@@ -69,10 +79,26 @@ def create_chain():
     return rag_pipeline
 
 
-st.set_page_config(
-    page_title="Pubmed Chatbox"
-)
+query_chain = create_chain()
+#Chatbot seems ok. There are problems with loading the chain due to large file size
+if "messages" not in st.session_state.keys():
+    st.session_state.messages = [{"role": "assistant", "content": "What would you like to ask?"}]
 
-st.header("Pubmed Chatbox!")
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.write(message["content"])
+
+if prompt := st.chat_input(placeholder="Your message..."):
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.write(prompt)
+
+if st.session_state.messages[-1]["role"] != "assistant":
+    with st.chat_message("assistant"):
+        with st.spinner("Wait..."):
+            response = query_chain(prompt) 
+            st.write(response) 
+    message = {"role": "assistant", "content": response}
+    st.session_state.messages.append(message)
 
 
