@@ -21,4 +21,4 @@ RUN cd ..
 # TODO port expose
 # TODO build
 
-CMD ["python", "./src/app.py"]
+CMD python -m streamlit run ./src/streamlit_app.py
