@@ -1,37 +1,98 @@
-# QA-with-transformers-WS23
-This is the final project for the Course NLP with Transformers of Univeristy of Heidelberg, Msc. Data and Computer Science, WS23/24
+# Pubmed QA System
 
-Model: https://huggingface.co/microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract     -----   https://huggingface.co/microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract-fulltext
-QA dataset (possible): https://pubmedqa.github.io/
+A user-friendly QA system designed to answer questions on medical data concerning intelligence from Pubmed abstracts.  
 
-Pretrain for QA.
+**Team Members**
+- Cristi Andrei Prioteasa (cristi.prioteasa@stud.uni-heidelberg.de) - (matriculation number), Master Data and Computer Science, Heidelberg University.
+- Mara-Eliana Popescu (mara-eliana.popescu@stud.uni-heidelberg.de) - 4166979, Master of Data and Computer Science, Heidelberg University.
+- Alper Dağgez (ro312@stud.uni-heidelberg.de) - (matriculation number), Master of Data and Computer Science, Heidelberg University.
 
-DB: Opensearch
+**Previous Team Member:** Tarik Mistura Arcoverde Cavalcanti
 
-Questions:
-  - Where to run OpenSearch? Asure or AWS free trials and run it there
-  - What is the point of paragraphing the document if the average abstract size (in tokens) is 220? Does that mean that a single embedding for the whole paragraph cannot be used for STS? whatever
-  - Are we allowed to use other data such as metadata, document content etc? Yes
+**Advisor:**
+John Ziegler (ziegler@informatik.uni-heidelberg.de)
 
-First Task: DB
-  1. Find appropiate way to represent documents (\n, paragraphs, find right size for the documents etc.) - trial and error
-  2. Do information retrieval based on semantic search that retrieves the right paragraphs at first. (extraction QA)
+<!-- TABLE OF CONTENTS -->
+<details>
+  <summary>Table of Contents</summary>
+  <ul>
+    <li><a href="#getting-started">Getting Started</a></li>
+    <li><a href="#introduction">Introduction</a></li>
+    <li><a href="#related-work">Related Work</a></li>
+    <li><a href="#methods">Methods</a></li>
+    <li><a href="#experimental-setup-and-results">Experimental Setup and Results</a></li>
+    <li><a href="#conclusions-and-future-work">Conclusions and Future Work</a></li>
+  </ul>
+</details>
 
+## Getting Started
 
-First Mileston: 11th January
-  - need data
-  - opensearch working (extractive QA)
+## Introduction
+With the recent advancements of Large Language Models (LLMs) interest in domain-specific applications powered by LLMs has increased. In particular, language models can assist experts in the medical domain most commonly by answering questions against a knowlegde base.
 
-Final Deadline: 4th March
+In this project, we implement a question answering system that takes in any queries regarding Pubmed abstracts related to the keyword "intelligence" from 2013 until 2023 and generates an answer in natural language.
+Our system is based on a Retrieval Augmented Generation (RAG) pipeline, combining text retrieval from a vector database with the generative capabilities of a state-of-the-art LLM.
+Furthermore, we evaluate the performance of our system by using a custom designed dataset.
 
-**************
+The [Methods](#methods) section gives an extensive account of our approach covering especially data acquisition and preprocessing, embedding and storing of the corresponding vectors, document retrieval from a given query, answer generation and much more.
 
-Dataset: https://huggingface.co/datasets/prio7777777/pubmed-demo
+## Related Work
 
-**************
-Milestone 2
-**************
+## Methods
+Our pipeline consists of the following stages:
+<ol>
+  <li><a href="#data-acquisition">Data Acquisition</a></li>
+  <li><a href="#chunking-and-vectorization">Chunking and Vectorization</a></li>
+  <li><a href="#text-retrieval-with-hybrid-search">Text Retrieval with Hybrid Search</a></li>
+  <li><a href="#response-generation">Response Generation</a></li>
+  <li><a href="#evaluation-methods">Evaluation Methods</a></li>
+  <li><a href="#user-interface">User Interface</a></li>
+</ol>
 
-See this for a hybrid search query: https://gist.github.com/ManZzup/1109d4c1f6b8bc48b60a67983dfbd0fd
-See this for one end-to-end evaluation framework: https://github.com/explodinggradients/ragas
-See this for tutorial to ragas: https://towardsdatascience.com/evaluating-rag-applications-with-ragas-81d67b0ee31a
+### Data Acquisition
+As already mentioned in the introduction, the data we gathered consists of abstracts of Pubmed articles concerning intelligence, published between 2013 and 2023 [[Link](https://pubmed.ncbi.nlm.nih.gov/?term=intelligence+%5BTitle%2Fabstract%5D&filter=simsearch1.fha&filter=years.2014-2024&sort=date)].
+
+We used the [Bio.Entrez](https://biopython.org/docs/1.75/api/Bio.Entrez.html) Python package to access the Pubmed database and scrape the targeted abstracts together with relevant metadata consisting of the title of the article, the date of publication and the list of authors.
+
+The main challenge encountered at this stage was the fact that the underlying public NCBI Entrez API limits the number of retrieved articles to 10000. If you follow the link above you can see that over 60000 articles match our criteria. To overcome this limitation we used multiple API calls, each of them retrieving articles from different periods of time. We ensured that the prescribed periods of time do not yield more than 10000 articles. We exhaust the whole range from 2013 to 2023 without having overlapping between the different API calls. Overall, we managed to gather 69698 abstracts with the corresponding metadata.
+
+We stored the data as a private HuggingFace dataset with the following data fields:
+- `title`,
+- `abstract`,
+- `publication_date`: in the format DD/MM/YYYY,
+- `id`: unique identifier for each article,
+- `authors`: list of names.
+
+The file [download_pubmed.py](src/download_pubmed.py) contains the whole pipeline for scraping the data and creating a local dataset in JSON format with the same data fields as our HuggingFace dataset.
+
+### Chunking and Vectorization
+
+![Image](images/embedding-model.png)
+
+To be able to perform both lexical and semantic search on the gathered data, we chunked each abstract, embedded each chunk and stored all embeddings in an index in Elasticsearch hosted on Elastic Cloud.
+
+Our system uses the [PubMedBERT Embeddings](https://huggingface.co/NeuML/pubmedbert-base-embeddings) to vectorize the text chunks. This embedding model is particularly suitable to our task for various reasons:
+- The model, based on [MSR BiomedBERT](https://huggingface.co/microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract-fulltext) already pretrained on full Pubmed articles, was further finetuned using Pubmed title-abstract pairs.
+- The embedding space is a 768 dimensional dense vector space, which is a generous embedding dimensionality.
+
+We experimented with a couple of chunking strategies employing the Langchain Text Splitters. Besides selecting the text splitter, we tried out different chunk sizes to find a good fit. The embedding model expects as input a sequence no longer than 512 tokens, thus limiting the chunk size. The following table shows all the combinations we used:
+
+<!-- Use ✅ or  ❌ -->
+| Text Splitter\Chunk Size | 50 | 256 | 400 |
+|--------------------------|----|-----|-----|
+| [RecursiveCharacterTextSplitter](https://python.langchain.com/docs/modules/data_connection/document_transformers/recursive_text_splitter) | ? | ? | ? |
+| [SentenceTransformersTokenTextSplitter](https://python.langchain.com/docs/modules/data_connection/document_transformers/split_by_token) | ? | ? | ? |
+
+For easy access to the vector database, irrespective of the machine on which our QA system is run we created an Elasticsearch instance on Elastic Cloud. Other reasons for choosing Elasticsearch were its compatibility with Langchain and the costs for maintaining the vector database.
+
+### Text Retrieval with Hybrid Search
+
+### Response Generation
+
+### Evaluation Methods
+
+### User Interface
+
+## Experimental Setup and Results
+
+## Conclusions and Future Work
