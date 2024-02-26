@@ -23,7 +23,7 @@ import transformers
 from langchain.llms import HuggingFacePipeline
 
 
-def prepare_llm(auth_token: str | None, model_id: str = "meta-llama/Llama-2-7b-chat-hf"):
+def prepare_llm(auth_token, model_id= "meta-llama/Llama-2-7b-chat-hf"):
     '''
     Creates a text generation pipeline using the referenced model.
 
@@ -40,17 +40,18 @@ def prepare_llm(auth_token: str | None, model_id: str = "meta-llama/Llama-2-7b-c
 
     model_config = AutoConfig.from_pretrained(model_id, use_auth_token = auth_token)
 
+    ## TODO: add back bits and bites
     model = AutoModelForCausalLM.from_pretrained(
         model_id,
-        quantization_config = bitsAndBites_config,
+        # quantization_config = bitsAndBites_config,
         trust_remote_code = True,
         config = model_config,
         device_map = 'auto',
         token = auth_token
     )
 
-    ##TODO: check that it works
-    model = model.to_bettertransformer()
+    ##supported natively by llama
+    # model = model.to_bettertransformer()
 
     model.eval()# we only use the model for inference
     print(f"Model loaded ")
@@ -65,10 +66,10 @@ def prepare_llm(auth_token: str | None, model_id: str = "meta-llama/Llama-2-7b-c
         task = 'text-generation',
         temperature = 0.01,
         max_new_tokens = 200,  # max number of tokens to generate in the output
-        repetition_penalty = 1.1  # without this output begins repeating
+        repetition_penalty = 1.1,  # without this output begins repeating,
+        # device= 'cuda:0'
     )
 
-    
     llm = HuggingFacePipeline(pipeline = generate_text)
 
     return llm
@@ -105,6 +106,7 @@ def rag_pipeline(model_id: str,
         embedding = embeddings,
         es_api_key = ELASTIC_API_KEY
     )
+    ## TODO: replace with ensemble retriever
     retriever = elastic_vector_search.as_retriever(search_kwargs={"k":3})
     llm = prepare_llm(HUGGINGFACE_TOKEN, model_id)
     

@@ -157,3 +157,19 @@ TODOS:
     https://blog.langchain.dev/query-transformations/
     ) / context enrichment
     
+
+25 February 2024 20:41:07
+
+probably wont have time and resources to run different configs, maybe at least for query transformation
+https://python.langchain.com/docs/templates/
+
+106 mins still not done indexing the 400 dataset on cpu
+
+TODO: 
+-implement read-write-retrieve query transformation usint OpenAI chat in utils.py
+
+
+26 February 2024 16:50:28
+read-write-retrieve query transformation.
+Inference time is really slow: 10 mins per inference with 2B params
+results are aweful
