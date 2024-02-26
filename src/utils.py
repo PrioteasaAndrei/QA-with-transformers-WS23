@@ -21,9 +21,10 @@ from torch import cuda, bfloat16
 from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
 import transformers
 from langchain.llms import HuggingFacePipeline
+import torch
+from langchain_openai import ChatOpenAI
 
-
-def prepare_llm(auth_token, model_id= "meta-llama/Llama-2-7b-chat-hf"):
+def prepare_llm(auth_token, model_id= "meta-llama/Llama-2-7b-chat-hf",use_openai=True,**kwargs):
     '''
     Creates a text generation pipeline using the referenced model.
 
@@ -34,6 +35,15 @@ def prepare_llm(auth_token, model_id= "meta-llama/Llama-2-7b-chat-hf"):
     RETURNS:
     LLM
     '''
+
+    if use_openai:
+        OPENAI_API_KEY = kwargs.get('OPENAI_API_KEY', None)
+        model = ChatOpenAI(temperature=0,openai_api_key=OPENAI_API_KEY,model='gpt-3.5-turbo')
+        ## TODO create a Huggingface pipeline for this
+        pass
+
+
+
     bitsAndBites_config = BitsAndBytesConfig(load_in_4bit = True, 
                                             bnb_4bit_compute_dtype = bfloat16, 
                                             bnb_4bit_use_double_quant = True)
@@ -45,9 +55,11 @@ def prepare_llm(auth_token, model_id= "meta-llama/Llama-2-7b-chat-hf"):
         model_id,
         # quantization_config = bitsAndBites_config,
         trust_remote_code = True,
+        torch_dtype=torch.bfloat16, 
         config = model_config,
         device_map = 'auto',
-        token = auth_token
+        token = auth_token,
+        # attn_implementation="flash_attention_2",
     )
 
     ##supported natively by llama

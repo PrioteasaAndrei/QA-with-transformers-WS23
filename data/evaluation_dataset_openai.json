@@ -1,0 +1,122 @@
+[
+  {
+    "question": "How many fentanyl cases in the USA between 2019 Q4 and 2020 Q3 were found to contain phenethyl 4 ANPP?",
+    "paragraph": "Between 2019 Q4 and 2020 Q3 phenethyl 4 ANPP was detected in 25 1 054 fentanyl cases in the USA",
+    "title of abstract": "Phenethyl 4 ANPP A Marginally Active Byproduct Suggesting a Switch in Illicit Fentanyl Synthesis Routes",
+    "generated_answer": "25 out of 1,054 fentanyl cases in the USA between 2019 Q4 and 2020 Q3 contained phenethyl-4-ANPP."
+  },
+  {
+    "question": "What surgical techniques are commonly used for the management of benign prostatic enlargement (BPE)?",
+    "paragraph": "A great variety of surgical techniques are available for surgical management with three of the most common being monopolar transurethral resection of the prostate mTUR P bipolar transurethral resection of the prostate bTUR P and bipolar transurethral vaporization of the prostate bTUVis",
+    "title of abstract": "Cluster Analysis Assessment in Proposing a Surgical Technique for Benign Prostatic Enlargement",
+    "generated_answer": "Common surgical techniques for benign prostatic enlargement (BPE) include monopolar transurethral resection of the prostate (MTUR-P), bipolar transurethral resection of the prostate (BTUR-P), and bipolar transurethral vaporization of the prostate (BTUVIS)."
+  },
+  {
+    "question": "What is one of the five methodological areas identified by the ISPOR emerging good practices task force for the application of machine learning in health economics and outcomes research (HEOR)?",
+    "paragraph": "The task force identified 5 methodological areas where ML could enhance HEOR 1 cohort selection identifying samples with greater specificity with respect to inclusion criteria",
+    "title of abstract": "Machine Learning Methods in Health Economics and Outcomes Research The PALISADE Checklist A Good Practices Report of an ISPOR Task Force",
+    "generated_answer": "The ISPOR task force identified 5 methodological areas where machine learning could enhance health economics and outcomes research: cohort selection, predictors identification, predictive analytics, causal inference, and economic model development."
+  },
+  {
+    "question": "What is the achieved classification accuracy for fall detection through simulations in the hardware module based on the Hopfield Neural Network?",
+    "paragraph": "The designs are checked with validation scenarios and the experiment is completed with a Hopfield neural network in the analog module Through simulations the classification accuracy of the fall data reached 88 9",
+    "title of abstract": "Hardware Based Hopfield Neuromorphic Computing for Fall Detection",
+    "generated_answer": "The classification accuracy for fall detection using Hopfield Neural Network simulations reached 88.9%, showing feasibility and efficiency in hardware design."
+  },
+  {
+    "question": "What deep learning model is employed for Covid-19 detection in chest X-ray images?",
+    "paragraph": "A deep learning based model i e faster regions with CNNs Faster RCNN with ResNet 101 is applied on X Ray images of the chest for Covid 19 detection",
+    "title of abstract": "An IoT Based Deep Learning Framework for Early Assessment of Covid 19",
+    "generated_answer": "Deep learning models like ResNet50, InceptionV3, and VGG16 have been fine-tuned to detect Covid-19 in chest X-ray images with high accuracy."
+  },
+  {
+    "question": "How is fetal head circumference (HC) typically measured in prenatal ultrasound screening?",
+    "paragraph": "Fetal head circumference (HC) in prenatal ultrasound screening is usually measured manually by sonographers in two-dimensional (2D) ultrasound images",
+    "title of abstract": "A new approach to automatic measure fetal head circumference in ultrasound images using convolutional neural networks",
+    "generated_answer": "Fetal head circumference in prenatal ultrasound screening is traditionally manually measured but can now be automated using convolutional neural networks for more accurate results."
+  },
+  {
+    "question": "What was announced as Australia's 10th National Health Priority in 2019?",
+    "paragraph": "Highlighting the critical importance of research in this area Quality Use of Medicines and Medicine Safety was announced as Australia s 10th National Health Priority in 2019",
+    "title of abstract": "The Medicines Intelligence Centre of Research Excellence Co creating real world evidence to support the evidentiary needs of Australian medicines regulators and payers",
+    "generated_answer": "I don't know."
+  },
+  {
+    "question": "What is the recommended mode of delivery for pregnant women with achondroplasia?",
+    "paragraph": "Pregnant women with achondroplasia must undergo cesarean section delivery",
+    "title of abstract": "Legare JM 1",
+    "generated_answer": "The best mode of delivery for pregnant women with achondroplasia should be determined by obstetricians based on individual circumstances to ensure the safest outcome for both mother and baby."
+  },
+  {
+    "question": "How is the diagnosis of MPS II typically established in a female proband with suggestive clinical features?",
+    "paragraph": "The diagnosis of MPS II is usually established in a female proband with suggestive clinical features by identification of a heterozygous IDS pathogenic variant on molecular genetic testing",
+    "title of abstract": "Scarpa M 1",
+    "generated_answer": "Diagnosis of MPS II in a female proband with clinical features involves genetic testing for variants in the IDS gene and assessing for neuronopathic or non-neuronopathic presentation."
+  },
+  {
+    "question": "How is diastrophic dysplasia inherited?",
+    "paragraph": "Diastrophic dysplasia is inherited in an autosomal recessive manner",
+    "title of abstract": "Unger S 1 Superti Furga A 2",
+    "generated_answer": "Diastrophic dysplasia is inherited in an autosomal recessive pattern, meaning both parents must pass on a copy of the mutated gene for the child to develop the condition."
+  },
+  {
+    "question": "What were the most commonly used methods for bone age assessment in the studies reviewed?",
+    "paragraph": "BoneXpert automated software was the most commonly used software followed by DL models and ML models in the studies for assessment of bone age",
+    "title of abstract": "Use of artificial intelligence in determination of bone age of the healthy individuals A scoping review",
+    "generated_answer": "The most commonly used methods for bone age assessment in reviewed studies include traditional manual approaches like Demirjian and Cameriere, as well as automatic approaches based on deep learning techniques."
+  },
+  {
+    "question": "What was the highest score given to an answer in the assessment of ChatGPT's information on allergic rhinitis?",
+    "paragraph": "The highest score given to an answer was 5 indicating no inaccuracies",
+    "title of abstract": "Artificial intelligence and allergic rhinitis does ChatGPT increase or impair the knowledge",
+    "generated_answer": "The highest score given to an answer in ChatGPT assessment on allergic rhinitis is not specified in the provided context."
+  },
+  {
+    "question": "What is FASD?",
+    "paragraph": "Fetal Alcohol Spectrum Disorder (FASD) is a collective name for lifelong physical and neurodevelopmental problems caused by the gestational consumption of alcohol affecting fetal development",
+    "title of abstract": "Neuropsychological evaluation of children and adolescentswith fetal alcohol spectrum disordersin the Brazilian population",
+    "generated_answer": "Fetal Alcohol Spectrum Disorder (FASD) can lead to cognitive deficits, behavioral issues, learning difficulties, memory problems, language delays, and executive functioning impairments."
+  },
+  {
+    "question": "What is the duration of the scientific collaboration between Novartis Pharmaceuticals Corporation and the FDA?",
+    "paragraph": "In 2020 Novartis Pharmaceuticals Corporation and the U S Food and Drug Administration FDA started a 4 year scientific collaboration to approach complex new data modalities and advanced analytics",
+    "title of abstract": "Methodology for good machine learning with multi omics data",
+    "generated_answer": "I don't know."
+  },
+  {
+    "question": "What genetic correlation was found between intracranial volume (ICV) and years of education (EduYears) using genome-wide association studies (GWAS)?",
+    "paragraph": "Using bivariate LD Score regression we found a genetic correlation between intracranial volume ICV and years of education EduYears of 0 41",
+    "title of abstract": "The causal influence of brain size on human intelligence Evidence from within family phenotypic associations and GWAS modeling",
+    "generated_answer": "The genetic correlation between intracranial volume and years of education was found to be 0.41, indicating a potential link between brain size and educational attainment."
+  },
+  {
+    "question": "What are Objective Retinal prostheses?",
+    "paragraph": "Objective Retinal prostheses are promising devices to restore vision for patients with severe age related macular degeneration or retinitis pigmentosa disease",
+    "title of abstract": "Artificial intelligence techniques for retinal prostheses a comprehensive review and future direction",
+    "generated_answer": "Retinal prostheses are devices to restore vision for patients with severe age-related macular degeneration or retinitis pigmentosa, using visual processing mechanisms."
+  },
+  {
+    "question": "What was the association between gestational age at birth and Full Scale Intelligence Quotient (FSIQ)?",
+    "paragraph": "Gestational age at birth showed a positive association with Full Scale Intelligence Quotient FSIQ with the average FSIQ score increasing by 1 6 points for each week",
+    "title of abstract": "Cognitive and Behavioral Development of 9 Year Old Children After Maternal Cancer During Pregnancy A Prospective Multicenter Cohort Study",
+    "generated_answer": "The study did not directly focus on the association between gestational age at birth and Full Scale Intelligence Quotient (FSIQ) in children."
+  },
+  {
+    "question": "What is the Tuberous Sclerosis 2000 Study?",
+    "paragraph": "The Tuberous Sclerosis 2000 Study is a prospective longitudinal study of TSC",
+    "title of abstract": "Epilepsy severity mediates association between mutation type and ADHD symptoms in tuberous sclerosis complex",
+    "generated_answer": "I don't know the specific details of the Tuberous Sclerosis 2000 Study. The context provided discusses the significance, analysis, and a case study of Tuberous Sclerosis Complex."
+  },
+  {
+    "question": "How many meta topologies were extracted in neuroepithelial tumors?",
+    "paragraph": "In neuroepithelial tumors six meta topologies were extracted each detailing a transpallial pattern with distinct parenchymal and ventricular compositions",
+    "title of abstract": "Meta topologies define distinct anatomical classes of brain tumours linked to histology and survival",
+    "generated_answer": "Six meta-topologies were extracted in neuroepithelial tumors. Each detailed a distinct anatomical pattern with unique histopathologic and molecular profiles."
+  },
+  {
+    "question": "What is the gauge factor of the hydrogel strain sensors at 100-1100 strain?",
+    "paragraph": "excellent strain sensitivity gauge factor 11 566 at 100 1100",
+    "title of abstract": "Carbon Nanotubes and Silica polyaniline Core Shell Particles Synergistically Enhance the Toughness and Electrical Conductivity in Hydrophobic Associated Hydrogels",
+    "generated_answer": "I don't know the gauge factor of hydrogel strain sensors at 100-1100 strain."
+  }
+]

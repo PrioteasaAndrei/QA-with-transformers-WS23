@@ -173,3 +173,13 @@ TODO:
 read-write-retrieve query transformation.
 Inference time is really slow: 10 mins per inference with 2B params
 results are aweful
+
+
+Tried a mock-up for openAI gpt 3.5 chain and seems to work fine. Still need to evaluate.
+
+evaluation_dataset_openai.json - manually extracted pairs of question/answer + generated answer from gpt 3.5 chain
+
+TODO: 
+-replace generation model with GPT 3.5 turbo
+-manually check evaluation dataset made initially by Mara to see gpt 3.5. answers. It halucinates a lot and is not very explicit
+(note that some are good and the original paragraphs do not correspond with what the retreiver retrieves).
