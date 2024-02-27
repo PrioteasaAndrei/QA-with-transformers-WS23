@@ -26,6 +26,11 @@ John Ziegler (ziegler@informatik.uni-heidelberg.de)
 </details>
 
 ## Getting Started
+Use the following command to start the app:
+
+```
+python -m streamlit run src/streamlit_app.py
+```
 
 ## Introduction
 With the recent advancements of Large Language Models (LLMs) interest in domain-specific applications powered by LLMs has increased. In particular, language models can assist experts in the medical domain most commonly by answering questions against a knowlegde base.

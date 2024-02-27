@@ -34,17 +34,17 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from importlib import reload
 
+from langchain_community.llms import Ollama
 
-def prepare_llm(auth_token, model_id= "meta-llama/Llama-2-7b-chat-hf",use_openai=True,**kwargs):
+def prepare_llm(auth_token,model_id = "llama2:latest", use_openai=False, **kwargs):
     '''
-    Creates a text generation pipeline using the referenced model.
+    Initializes an LLM either through Ollama or through OpenAI:
 
     PARAMETERS:
-    auth_token - HuggingFace token
-    model_id - name of Huggingface LLM
+    model_id - name of Ollama model
 
     RETURNS:
-    LLM
+    llm
     '''
     OPENAI_API_KEY = kwargs.get('OPENAI_API_KEY', None)
 

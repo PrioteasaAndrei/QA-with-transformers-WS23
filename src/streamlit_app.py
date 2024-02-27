@@ -32,7 +32,7 @@ def generate_response(input_text):
   
   ## Rewrite the input text
   rewrite_prompt = hub.pull("langchain-ai/rewrite")
-  rewrite_llm = ChatOpenAI(temperature=0,openai_api_key=OPENAI_API_KEY)
+  rewrite_llm = ChatOpenAI(temperature = 0, openai_api_key = OPENAI_API_KEY)
 
   rewriter = rewrite_prompt | rewrite_llm | StrOutputParser() | _parse
   rewritten_input_text = rewriter.invoke({"x": input_text})
