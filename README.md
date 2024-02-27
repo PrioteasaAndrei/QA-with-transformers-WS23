@@ -43,7 +43,7 @@ Our pipeline consists of the following stages:
 <ol>
   <li><a href="#data-acquisition">Data Acquisition</a></li>
   <li><a href="#chunking-and-vectorization">Chunking and Vectorization</a></li>
-  <li><a href="#text-retrieval-with-hybrid-search">Text Retrieval with Hybrid Search</a></li>
+  <li><a href="#text-retrieval-and-query-transformation">Text Retrieval and Query Transformation</a></li>
   <li><a href="#response-generation">Response Generation</a></li>
   <li><a href="#evaluation-methods">Evaluation Methods</a></li>
   <li><a href="#user-interface">User Interface</a></li>
@@ -73,19 +73,21 @@ To be able to perform both lexical and semantic search on the gathered data, we 
 
 Our system uses the [PubMedBERT Embeddings](https://huggingface.co/NeuML/pubmedbert-base-embeddings) to vectorize the text chunks. This embedding model is particularly suitable to our task for various reasons:
 - The model, based on [MSR BiomedBERT](https://huggingface.co/microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract-fulltext) already pretrained on full Pubmed articles, was further finetuned using Pubmed title-abstract pairs.
-- The embedding space is a 768 dimensional dense vector space, which is a generous embedding dimensionality.
+- The embedding space is a 768 dimensional dense vector space, having a generous embedding dimensionality.
 
 We experimented with a couple of chunking strategies employing the Langchain Text Splitters. Besides selecting the text splitter, we tried out different chunk sizes to find a good fit. The embedding model expects as input a sequence no longer than 512 tokens, thus limiting the chunk size. The following table shows all the combinations we used:
 
 <!-- Use ✅ or  ❌ -->
-| Text Splitter\Chunk Size | 50 | 256 | 400 |
-|--------------------------|----|-----|-----|
-| [RecursiveCharacterTextSplitter](https://python.langchain.com/docs/modules/data_connection/document_transformers/recursive_text_splitter) | ? | ? | ? |
-| [SentenceTransformersTokenTextSplitter](https://python.langchain.com/docs/modules/data_connection/document_transformers/split_by_token) | ? | ? | ? |
+| Text Splitter\Chunk Size | 50 | 100 | 200 | 400 |
+|--------------------------|----|-----|-----|-----|
+| [RecursiveCharacterTextSplitter](https://python.langchain.com/docs/modules/data_connection/document_transformers/recursive_text_splitter) |❌ | ❌ | ✅ | ✅ |
+| [SentenceTransformersTokenTextSplitter](https://python.langchain.com/docs/modules/data_connection/document_transformers/split_by_token) | ✅ | ✅ | ✅ | ✅ |
 
 For easy access to the vector database, irrespective of the machine on which our QA system is run we created an Elasticsearch instance on Elastic Cloud. Other reasons for choosing Elasticsearch were its compatibility with Langchain and the costs for maintaining the vector database.
 
-### Text Retrieval with Hybrid Search
+Each index has the same underlying retrieval strategy, namely a [Hybrid ApproxRetrievalStrategy](https://python.langchain.com/docs/integrations/vectorstores/elasticsearch#approxretrievalstrategy), which uses a combination of approximate semantic search and keyword based search. 
+
+### Text Retrieval with Query Transformation
 
 ### Response Generation
 
