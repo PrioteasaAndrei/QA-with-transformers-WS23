@@ -35,13 +35,11 @@ def prepare_llm(auth_token, model_id= "meta-llama/Llama-2-7b-chat-hf",use_openai
     RETURNS:
     LLM
     '''
+    OPENAI_API_KEY = kwargs.get('OPENAI_API_KEY', None)
 
-    if use_openai:
-        OPENAI_API_KEY = kwargs.get('OPENAI_API_KEY', None)
-        model = ChatOpenAI(temperature=0,openai_api_key=OPENAI_API_KEY,model='gpt-3.5-turbo')
-        ## TODO create a Huggingface pipeline for this
-        pass
-
+    if use_openai: 
+        llm = ChatOpenAI(temperature=0,openai_api_key=OPENAI_API_KEY)
+        return llm
 
 
     bitsAndBites_config = BitsAndBytesConfig(load_in_4bit = True, 
@@ -87,7 +85,8 @@ def prepare_llm(auth_token, model_id= "meta-llama/Llama-2-7b-chat-hf",use_openai
     return llm
 
 def rag_pipeline(model_id: str, 
-                 index_name: str,):
+                 index_name: str,
+                 use_openai: bool = False,):
     '''
     Initializes a RAG pipeline.
 
@@ -103,6 +102,7 @@ def rag_pipeline(model_id: str,
     HUGGINGFACE_TOKEN = os.getenv('HUGGINGFACE_TOKEN')
     ELASTIC_CLOUD_ID = os.getenv('ELASTIC_CLOUD_ID')
     ELASTIC_API_KEY = os.getenv('ELASTIC_API_KEY')
+    OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
     embedding_model = "NeuML/pubmedbert-base-embeddings"
     device = 'cuda:0' 
 
@@ -120,7 +120,8 @@ def rag_pipeline(model_id: str,
     )
     ## TODO: replace with ensemble retriever
     retriever = elastic_vector_search.as_retriever(search_kwargs={"k":3})
-    llm = prepare_llm(HUGGINGFACE_TOKEN, model_id)
+
+    llm = prepare_llm(HUGGINGFACE_TOKEN,model_id,use_openai,OPENAI_API_KEY=OPENAI_API_KEY)
     
     print("Preparing RAG pipeline...")
     rag_pipeline = RetrievalQA.from_chain_type(
@@ -155,6 +156,7 @@ def run_config(elastic_vector_search : ElasticsearchStore,
         HUGGINGFACE_DATASET_NAME: str
         text_splitter: TextSplitter
         llm: HuggingFacePipeline
+        max_retrieved_docs: int
     '''
     index_name = kwargs.get('index_name', None)
     evaluation_dataset_path = kwargs.get('evaluation_dataset_path', None)
@@ -164,6 +166,7 @@ def run_config(elastic_vector_search : ElasticsearchStore,
     text_splitter = kwargs.get('text_splitter', None)
     llm = kwargs.get('llm', None)
     save_path = kwargs.get('save_path', None)
+    max_retrieved_docs = kwargs.get('max_retrieved_docs', 3)
 
     if index_name is None or evaluation_dataset_path is None or HUGGINGFACE_TOKEN is None or HUGGINGFACE_DATASET_NAME is None or llm is None:
         raise ValueError("Missing parameters")
@@ -181,8 +184,8 @@ def run_config(elastic_vector_search : ElasticsearchStore,
     rag_pipeline = RetrievalQA.from_chain_type(
         llm=llm,
         chain_type="stuff",
-        verbose=True,
-        retriever = elastic_vector_search.as_retriever(search_kwargs={"k":3}), ##TODO: increase later to see influence
+        verbose=verbose,
+        retriever = elastic_vector_search.as_retriever(search_kwargs={"k":max_retrieved_docs}), ##TODO: increase later to see influence
         chain_type_kwargs={
             "verbose": True },
 
@@ -233,10 +236,11 @@ def run_config(elastic_vector_search : ElasticsearchStore,
         
         top_k = 5
 
-        returned_docs = call_similartiy(retriever,query,top_k)
+        # returned_docs = call_similartiy(retriever,query,top_k)
 
         answer = rag_pipeline(query)
         answers.append(answer)
+
     
     if save:
         field_names = ['query','result']
@@ -261,7 +265,7 @@ def call_similartiy(retriever,query, top_k=5,is_ensemble=False):
     if is_ensemble:
         return retriever.invoke(query,top_k)
     else:
-        return retriever.similarity(query,top_k)
+        return retriever.get_relevant_documents(query,top_k)
 
 def testset_to_validation(save=False,**kwargs):
 
