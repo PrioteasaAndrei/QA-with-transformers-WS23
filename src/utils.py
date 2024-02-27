@@ -23,6 +23,17 @@ import transformers
 from langchain.llms import HuggingFacePipeline
 import torch
 from langchain_openai import ChatOpenAI
+import torch
+import streamlit as st
+from langchain.prompts import ChatPromptTemplate
+from langchain import hub
+from langchain_openai import ChatOpenAI
+from langchain_community.utilities import DuckDuckGoSearchAPIWrapper
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import RunnablePassthrough
+from importlib import reload
+
 
 def prepare_llm(auth_token, model_id= "meta-llama/Llama-2-7b-chat-hf",use_openai=True,**kwargs):
     '''
@@ -83,6 +94,10 @@ def prepare_llm(auth_token, model_id= "meta-llama/Llama-2-7b-chat-hf",use_openai
     llm = HuggingFacePipeline(pipeline = generate_text)
 
     return llm
+
+def _parse(text):
+    return text.strip("**")
+
 
 def rag_pipeline(model_id: str, 
                  index_name: str,
@@ -167,6 +182,14 @@ def run_config(elastic_vector_search : ElasticsearchStore,
     llm = kwargs.get('llm', None)
     save_path = kwargs.get('save_path', None)
     max_retrieved_docs = kwargs.get('max_retrieved_docs', 3)
+    query_transformation_strategy = kwargs.get('query_transformation_strategy', "default")
+    OPENAI_API_KEY = kwargs.get('OPENAI_API_KEY', None)
+
+    rewrite_prompt = hub.pull("langchain-ai/rewrite")
+    rewrite_llm = ChatOpenAI(temperature=0,openai_api_key=OPENAI_API_KEY)
+
+    rewriter = rewrite_prompt | rewrite_llm | StrOutputParser() | _parse
+    
 
     if index_name is None or evaluation_dataset_path is None or HUGGINGFACE_TOKEN is None or HUGGINGFACE_DATASET_NAME is None or llm is None:
         raise ValueError("Missing parameters")
@@ -187,7 +210,7 @@ def run_config(elastic_vector_search : ElasticsearchStore,
         verbose=verbose,
         retriever = elastic_vector_search.as_retriever(search_kwargs={"k":max_retrieved_docs}), ##TODO: increase later to see influence
         chain_type_kwargs={
-            "verbose": True },
+            "verbose": verbose },
 
     )
 
@@ -237,6 +260,10 @@ def run_config(elastic_vector_search : ElasticsearchStore,
         top_k = 5
 
         # returned_docs = call_similartiy(retriever,query,top_k)
+
+        ## rewrite query
+        if query_transformation_strategy == "read-write-retrieve":
+            query = rewriter.invoke({"x": query})
 
         answer = rag_pipeline(query)
         answers.append(answer)
