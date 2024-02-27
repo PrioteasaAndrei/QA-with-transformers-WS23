@@ -12,7 +12,7 @@ import logging
 logging.basicConfig(filename='query_transformation.log', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 load_dotenv()  # take environment variables from .env.
 
-model_id = "llama2:latest"
+model_id = "GPT 3.5 Turbo"
 index_name = "pubmedbert-sentence-transformer-400"
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -27,7 +27,8 @@ def _parse(text):
 
 
 def generate_response(input_text):
-  rag = rag_pipeline(model_id, index_name)
+  ## TODO: replace this with the other template style with | from openai
+  rag = rag_pipeline(model_id, index_name,use_openai=True)
   
   ## Rewrite the input text
   rewrite_prompt = hub.pull("langchain-ai/rewrite")

@@ -82,6 +82,14 @@ Our system uses the [PubMedBERT Embeddings](https://huggingface.co/NeuML/pubmedb
 
 We experimented with a couple of chunking strategies employing the Langchain Text Splitters. Besides selecting the text splitter, we tried out different chunk sizes to find a good fit. The embedding model expects as input a sequence no longer than 512 tokens, thus limiting the chunk size. The following table shows all the combinations we used:
 
+
+RAGAs validation metrics for Sentence Transformer 400 chunking, no ensemble retriever, read-write-retrieve query transformation, Chat GPT 3.5. Turbo for both the rewritter and generation part, pubmedbert embeddings.
+
+{'answer_relevancy': 0.8942793135767543,
+ 'context_precision': 0.9253731342358208,
+ 'context_recall': 0.9253731343283582,
+ 'faithfulness': 0.825542328042328}
+
 <!-- Use ✅ or  ❌ -->
 | Text Splitter\Chunk Size | 50 | 100 | 200 | 400 |
 |--------------------------|----|-----|-----|-----|

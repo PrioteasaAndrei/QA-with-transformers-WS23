@@ -183,3 +183,14 @@ TODO:
 -replace generation model with GPT 3.5 turbo
 -manually check evaluation dataset made initially by Mara to see gpt 3.5. answers. It halucinates a lot and is not very explicit
 (note that some are good and the original paragraphs do not correspond with what the retreiver retrieves).
+
+
+27 February 2024 14:24:29
+
+streamlist app functional
+
+-run evaluation with ragas and clean data folder
+
+NOTE: chunking has nothing to do with the validation dataset, the same dataset can be used for different chunking mechanisms
+
+check how much is k for retriever
