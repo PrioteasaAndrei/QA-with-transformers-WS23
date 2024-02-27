@@ -23,71 +23,30 @@ import transformers
 from langchain.llms import HuggingFacePipeline
 import torch
 from langchain_openai import ChatOpenAI
+from langchain_community.llms import Ollama
 
-def prepare_llm(auth_token, model_id= "meta-llama/Llama-2-7b-chat-hf",use_openai=True,**kwargs):
+def prepare_llm(model_id = "llama2:latest", use_openai=False, **kwargs):
     '''
-    Creates a text generation pipeline using the referenced model.
+    Initializes an LLM either through Ollama or through OpenAI:
 
     PARAMETERS:
-    auth_token - HuggingFace token
-    model_id - name of Huggingface LLM
+    model_id - name of Ollama model
 
     RETURNS:
-    LLM
+    llm
     '''
 
     if use_openai:
         OPENAI_API_KEY = kwargs.get('OPENAI_API_KEY', None)
-        model = ChatOpenAI(temperature=0,openai_api_key=OPENAI_API_KEY,model='gpt-3.5-turbo')
-        ## TODO create a Huggingface pipeline for this
-        pass
-
-
-
-    bitsAndBites_config = BitsAndBytesConfig(load_in_4bit = True, 
-                                            bnb_4bit_compute_dtype = bfloat16, 
-                                            bnb_4bit_use_double_quant = True)
-
-    model_config = AutoConfig.from_pretrained(model_id, use_auth_token = auth_token)
-
-    ## TODO: add back bits and bites
-    model = AutoModelForCausalLM.from_pretrained(
-        model_id,
-        # quantization_config = bitsAndBites_config,
-        trust_remote_code = True,
-        torch_dtype=torch.bfloat16, 
-        config = model_config,
-        device_map = 'auto',
-        token = auth_token,
-        # attn_implementation="flash_attention_2",
-    )
-
-    ##supported natively by llama
-    # model = model.to_bettertransformer()
-
-    model.eval()# we only use the model for inference
-    print(f"Model loaded ")
-
-    
-    tokenizer = AutoTokenizer.from_pretrained(model_id, use_auth_token = auth_token)
-
-    generate_text = transformers.pipeline(
-        model = model, 
-        tokenizer = tokenizer,
-        return_full_text = True,
-        task = 'text-generation',
-        temperature = 0.01,
-        max_new_tokens = 200,  # max number of tokens to generate in the output
-        repetition_penalty = 1.1,  # without this output begins repeating,
-        # device= 'cuda:0'
-    )
-
-    llm = HuggingFacePipeline(pipeline = generate_text)
+        llm = ChatOpenAI(temperature = 0, openai_api_key = OPENAI_API_KEY, model = 'gpt-3.5-turbo')
+    else:
+        llm = Ollama(model = model_id)
+        print("Successfully loaded.")
 
     return llm
 
 def rag_pipeline(model_id: str, 
-                 index_name: str,):
+                 index_name: str):
     '''
     Initializes a RAG pipeline.
 
@@ -120,7 +79,7 @@ def rag_pipeline(model_id: str,
     )
     ## TODO: replace with ensemble retriever
     retriever = elastic_vector_search.as_retriever(search_kwargs={"k":3})
-    llm = prepare_llm(HUGGINGFACE_TOKEN, model_id)
+    llm = prepare_llm(model_id)
     
     print("Preparing RAG pipeline...")
     rag_pipeline = RetrievalQA.from_chain_type(

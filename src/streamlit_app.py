@@ -12,7 +12,7 @@ import logging
 logging.basicConfig(filename='query_transformation.log', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 load_dotenv()  # take environment variables from .env.
 
-model_id = "meta-llama/Llama-2-7b-chat-hf"
+model_id = "llama2:latest"
 index_name = "pubmedbert-sentence-transformer-400"
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -31,7 +31,7 @@ def generate_response(input_text):
   
   ## Rewrite the input text
   rewrite_prompt = hub.pull("langchain-ai/rewrite")
-  rewrite_llm = ChatOpenAI(temperature=0,openai_api_key=OPENAI_API_KEY)
+  rewrite_llm = ChatOpenAI(temperature = 0, openai_api_key = OPENAI_API_KEY)
 
   rewriter = rewrite_prompt | rewrite_llm | StrOutputParser() | _parse
   rewritten_input_text = rewriter.invoke({"x": input_text})
