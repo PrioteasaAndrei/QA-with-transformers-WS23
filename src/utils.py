@@ -36,7 +36,7 @@ from importlib import reload
 
 from langchain_community.llms import Ollama
 
-def prepare_llm(auth_token,model_id = "llama2:latest", use_openai=False, **kwargs):
+def prepare_llm(auth_token, model_id = "llama2:latest", use_openai=False, **kwargs):
     '''
     Initializes an LLM either through Ollama or through OpenAI:
 
@@ -182,7 +182,7 @@ def run_config(elastic_vector_search : ElasticsearchStore,
     llm = kwargs.get('llm', None)
     save_path = kwargs.get('save_path', None)
     max_retrieved_docs = kwargs.get('max_retrieved_docs', 3)
-    query_transformation_strategy = kwargs.get('query_transformation_strategy', "default")
+    query_transformation_strategy = kwargs.get('query_transformation_strategy', 'default')
     OPENAI_API_KEY = kwargs.get('OPENAI_API_KEY', None)
 
     rewrite_prompt = hub.pull("langchain-ai/rewrite")
@@ -311,7 +311,7 @@ def testset_to_validation(save=False,**kwargs):
 
     result_df = result_df.drop(columns=['query','question_type','episode_done'])
     ## first parse the ground_truth and ground_truth context by \n
-    columns_mapping = {'question': 'question', 'result': 'answer', 'ground_truth': 'ground_truths','ground_truth_context':'contexts'}
+    columns_mapping = {'question': 'question', 'result': 'answer', 'ground_truth': 'ground_truths', 'ground_truth_context':'contexts'}
     result_df = result_df.rename(columns=columns_mapping)
     
     result_df['contexts'] = result_df['contexts'].apply(lambda x: [x])

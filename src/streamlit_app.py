@@ -12,7 +12,7 @@ import logging
 logging.basicConfig(filename='query_transformation.log', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 load_dotenv()  # take environment variables from .env.
 
-model_id = "GPT 3.5 Turbo"
+model_id = "llama2:latest"
 index_name = "pubmedbert-sentence-transformer-400"
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -40,10 +40,24 @@ def generate_response(input_text):
   logging.info(f"Original input: {input_text}. Transformed input: {rewritten_input_text}")
 
   answer = rag(rewritten_input_text)
-  st.info(answer['result'])
+  return answer['result']
 
-with st.form('my_form'):
-  text = st.text_area('Ask your question:')
-  submitted = st.form_submit_button('Submit')
-  if submitted:
-    generate_response(text)
+if "messages" not in st.session_state:
+    st.session_state["messages"] = [{"role": "assistant", "content": "How can I help you?"}]
+
+for msg in st.session_state.messages:
+    st.chat_message(msg["role"]).write(msg["content"])
+
+if prompt := st.chat_input():
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    st.chat_message("user").write(prompt)
+    msg = generate_response(prompt)
+    st.session_state.messages.append({"role": "assistant", "content": msg})
+    st.chat_message("assistant").write(msg)
+
+# OLD streamlit code
+# with st.form('my_form'):
+#   text = st.text_area('Ask your question:')
+#   submitted = st.form_submit_button('Submit')
+#   if submitted:
+#     generate_response(text)
