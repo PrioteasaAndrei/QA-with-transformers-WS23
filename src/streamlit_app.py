@@ -8,6 +8,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 import logging
+import time
 
 st.set_page_config(page_title="💬 PubMed ChatBot")
 
@@ -61,10 +62,15 @@ ensemble_retriever = load_ensemble_retriever(index_name,elastic_vector_search)
 def _parse(text):
     return text.strip("**")
 
-
-def generate_response(input_text):
-    # rag = rag_pipeline(model_id, index_name,use_openai=True,retriever_type='ensemble')
+@st.cache_resource
+def get_llm():
     llm = ChatOpenAI(temperature=0,openai_api_key=OPENAI_API_KEY)
+    return llm
+
+llm = get_llm()
+
+@st.cache_resource
+def get_retrieval_chain():
     rag = RetrievalQA.from_chain_type(
         llm=llm,
         chain_type="stuff",
@@ -73,13 +79,28 @@ def generate_response(input_text):
         chain_type_kwargs={
             "verbose": True },
     )
-    ## Rewrite the input text
+    return rag
+
+rag = get_retrieval_chain()
+
+@st.cache_resource
+def get_rewrite_prompt():
     rewrite_prompt = hub.pull("langchain-ai/rewrite")
-    rewrite_llm = ChatOpenAI(temperature = 0, openai_api_key = OPENAI_API_KEY)  
+    return rewrite_prompt
+
+rewrite_prompt = get_rewrite_prompt()
+
+def generate_response(input_text):
+    global rag
+    ## Rewrite the input text
+    start_time = time.time()
+    rewrite_llm = llm  
     rewriter = rewrite_prompt | rewrite_llm | StrOutputParser() | _parse
     rewritten_input_text = rewriter.invoke({"x": input_text})   
     logging.info(f"Original input: {input_text}. Transformed input: {rewritten_input_text}")    
     answer = rag(rewritten_input_text)
+    end_time = time.time()
+    logging.info(f"Time taken to generate response: {end_time - start_time} seconds")
     return answer['result']
 
 
