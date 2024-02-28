@@ -9,6 +9,8 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 import logging
 
+st.set_page_config(page_title="💬 PubMed ChatBot")
+
 logging.basicConfig(filename='query_transformation.log', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 load_dotenv()  # take environment variables from .env.
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -43,14 +45,13 @@ def get_vector_search():
 
 elastic_vector_search = get_vector_search()
 
-st.set_page_config(page_title="💬 PubMed ChatBot")
 st.title('💬 PubMed ChatBot')
 st.write("This is a chatbot that can answer questions related to PubMed articles. The default response type is targeted towards users with intermediate to advanced knowledge in the field of biomedicine. The initial buffering may take around 5 minutes.")
 
 @st.cache_resource
-def load_ensemble_retriever(index_name,elastic_vector_search):
+def load_ensemble_retriever(index_name,_elastic_vector_search):
     text_splitter = get_splitter_per_index(index_name)
-    retriever = create_ensemble_retriever(elastic_vector_search, text_splitter, neuro_weight=0.5)
+    retriever = create_ensemble_retriever(_elastic_vector_search, text_splitter, neuro_weight=0.5)
     return retriever
 
 ## buffer ensemble retriever for consecutive uses
