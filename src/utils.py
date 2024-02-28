@@ -262,8 +262,8 @@ def run_config(elastic_vector_search : ElasticsearchStore,
         # returned_docs = call_similartiy(retriever,query,top_k)
 
         ## rewrite query
-        if query_transformation_strategy == "read-write-retrieve":
-            query = rewriter.invoke({"x": query})
+        # if query_transformation_strategy == "read-write-retrieve":
+        #     query = rewriter.invoke({"x": query})
 
         answer = rag_pipeline(query)
         answers.append(answer)
@@ -311,11 +311,11 @@ def testset_to_validation(save=False,**kwargs):
 
     result_df = result_df.drop(columns=['query','question_type','episode_done'])
     ## first parse the ground_truth and ground_truth context by \n
-    columns_mapping = {'question': 'question', 'result': 'answer', 'ground_truth': 'ground_truths', 'ground_truth_context':'contexts'}
+    columns_mapping = {'question': 'question', 'result': 'answer', 'ground_truth_context':'contexts'} #'ground_truth': 'ground_truths',
     result_df = result_df.rename(columns=columns_mapping)
     
     result_df['contexts'] = result_df['contexts'].apply(lambda x: [x])
-    result_df['ground_truths'] = result_df['ground_truths'].apply(lambda x: [x])
+    # result_df['ground_truth'] = result_df['ground_truth'].apply(lambda x: [x])
 
     if save:
         result_df.to_csv(save_path_result,index=False)
