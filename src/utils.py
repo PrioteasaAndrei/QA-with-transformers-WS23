@@ -172,7 +172,7 @@ def rag_pipeline(model_id: str,
     return rag_pipeline
 
 
-def create_ensemble_retriever(neuro_retriever,text_splitter, neuro_weight=0.5):
+def create_ensemble_retriever(neuro_retriever,text_splitter, neuro_weight=0.5,max_retrieved_docs=3):
 
     load_dotenv()
     HUGGINGFACE_TOKEN = os.getenv('HUGGINGFACE_TOKEN')
@@ -185,7 +185,7 @@ def create_ensemble_retriever(neuro_retriever,text_splitter, neuro_weight=0.5):
     split_data = text_splitter.split_documents(data)
 
     bm25_retriever = BM25Retriever.from_documents(split_data)
-    neuro_retriever = neuro_retriever.as_retriever(search_kwargs={"k":3})
+    neuro_retriever = neuro_retriever.as_retriever(search_kwargs={"k":max_retrieved_docs})
 
     ensemble_retriever = EnsembleRetriever(
         retrievers=[bm25_retriever, neuro_retriever], weights=[neuro_weight, 1 - neuro_weight]

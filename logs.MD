@@ -206,6 +206,7 @@ TODOS:
 - finish report
 - analyze chunking_configuration data for question with bad metrics (to put in the report)
 - clean clode
-- make sure conda env working
-- maybe do buffering for ensemble retriever (before streamlit runs) and evaluate weight of retriever
+- make sure conda env working X
+- maybe do buffering for ensemble retriever (before streamlit runs) and evaluate weight of retriever X
 - ** deploy on streamlit cloud
+- analyze weight of ensemble retriever
