@@ -1,0 +1,4 @@
+configuration,answer_relevancy,context_precision,context_recall
+pubmedbert-sentence-transformer-50,0.8686053546490468,0.9253731342358208,0.9253731343283582
+pubmedbert-sentence-transformer-400,0.8762912010155349,0.9253731342358208,0.9253731343283582
+pubmedbert-recursive-character-400-overlap-50,0.9076794843584729,0.9253731342358208,0.9253731343283582

@@ -33,7 +33,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from importlib import reload
-
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.llms import Ollama
 
 def prepare_llm(auth_token, model_id = "llama2:latest", use_openai=False, **kwargs):
@@ -99,9 +99,27 @@ def _parse(text):
     return text.strip("**")
 
 
+def get_splitter_per_index(index_name: str):
+    splitter = None
+    if index_name == "pubmedbert-sentence-transformer-400":
+        splitter = SentenceTransformersTokenTextSplitter(chunk_overlap=10,model_name="NeuML/pubmedbert-base-embeddings",tokens_per_chunk=400)
+    elif index_name == 'pubmedbert-sentence-transformer-50':
+        splitter = SentenceTransformersTokenTextSplitter(chunk_overlap=10,model_name="NeuML/pubmedbert-base-embeddings",tokens_per_chunk=50)
+    elif index_name == 'pubmedbert-sentence-transformer-100':
+        splitter = SentenceTransformersTokenTextSplitter(chunk_overlap=10,model_name="NeuML/pubmedbert-base-embeddings",tokens_per_chunk=100)
+    elif index_name == 'pubmedbert-recursive-character-400-overlap-50':
+        splitter = RecursiveCharacterTextSplitter(chunk_size=400, chunk_overlap=50, length_function=len, is_separator_regex=False)
+
+    ## check if splitter is none
+    if splitter is None:
+        raise ValueError(f"Index {index_name} is not supported")
+    
+    return splitter
+
 def rag_pipeline(model_id: str, 
                  index_name: str,
-                 use_openai: bool = False,):
+                 use_openai: bool = False,
+                 retriever_type="ensemble"):
     '''
     Initializes a RAG pipeline.
 
@@ -112,7 +130,6 @@ def rag_pipeline(model_id: str,
     RETURNS:
     Chain for question-answering against an index.
     '''
-    
     load_dotenv()
     HUGGINGFACE_TOKEN = os.getenv('HUGGINGFACE_TOKEN')
     ELASTIC_CLOUD_ID = os.getenv('ELASTIC_CLOUD_ID')
@@ -134,7 +151,11 @@ def rag_pipeline(model_id: str,
         es_api_key = ELASTIC_API_KEY
     )
     ## TODO: replace with ensemble retriever
-    retriever = elastic_vector_search.as_retriever(search_kwargs={"k":3})
+    if retriever_type == "ensemble":
+        text_splitter = get_splitter_per_index(index_name)
+        retriever = create_ensemble_retriever(elastic_vector_search, text_splitter, neuro_weight=0.5)
+    else:
+        retriever = elastic_vector_search.as_retriever(search_kwargs={"k":3})
 
     llm = prepare_llm(HUGGINGFACE_TOKEN,model_id,use_openai,OPENAI_API_KEY=OPENAI_API_KEY)
     
@@ -149,6 +170,29 @@ def rag_pipeline(model_id: str,
     )
     print("RAG pipeline ready.")
     return rag_pipeline
+
+
+def create_ensemble_retriever(neuro_retriever,text_splitter, neuro_weight=0.5):
+
+    load_dotenv()
+    HUGGINGFACE_TOKEN = os.getenv('HUGGINGFACE_TOKEN')
+    HUGGINGFACE_DATASET_NAME = os.getenv('HUGGINGFACE_DATASET_NAME')
+
+    ## load and split the data
+    loader = HuggingFaceDatasetLoader(HUGGINGFACE_DATASET_NAME,use_auth_token=HUGGINGFACE_TOKEN,page_content_column='abstract')
+    data = loader.load()
+
+    split_data = text_splitter.split_documents(data)
+
+    bm25_retriever = BM25Retriever.from_documents(split_data)
+    neuro_retriever = neuro_retriever.as_retriever(search_kwargs={"k":3})
+
+    ensemble_retriever = EnsembleRetriever(
+        retrievers=[bm25_retriever, neuro_retriever], weights=[neuro_weight, 1 - neuro_weight]
+    )
+    retriever = ensemble_retriever
+
+    return retriever
 
 def run_config(elastic_vector_search : ElasticsearchStore,
                use_ensemble_retriever: bool,
@@ -182,13 +226,7 @@ def run_config(elastic_vector_search : ElasticsearchStore,
     llm = kwargs.get('llm', None)
     save_path = kwargs.get('save_path', None)
     max_retrieved_docs = kwargs.get('max_retrieved_docs', 3)
-    query_transformation_strategy = kwargs.get('query_transformation_strategy', 'default')
     OPENAI_API_KEY = kwargs.get('OPENAI_API_KEY', None)
-
-    rewrite_prompt = hub.pull("langchain-ai/rewrite")
-    rewrite_llm = ChatOpenAI(temperature=0,openai_api_key=OPENAI_API_KEY)
-
-    rewriter = rewrite_prompt | rewrite_llm | StrOutputParser() | _parse
     
 
     if index_name is None or evaluation_dataset_path is None or HUGGINGFACE_TOKEN is None or HUGGINGFACE_DATASET_NAME is None or llm is None:
@@ -260,10 +298,6 @@ def run_config(elastic_vector_search : ElasticsearchStore,
         top_k = 5
 
         # returned_docs = call_similartiy(retriever,query,top_k)
-
-        ## rewrite query
-        # if query_transformation_strategy == "read-write-retrieve":
-        #     query = rewriter.invoke({"x": query})
 
         answer = rag_pipeline(query)
         answers.append(answer)
@@ -351,18 +385,3 @@ def index_docs(data, text_splitter, index_name, **kwargs):
     db.client.indices.refresh(index=index_name)
 
     return db, split_data
-
-def create_ensemble_retriever(db,split_data):
-    '''
-    use invoke method for the ensemble retriever
-    '''
-    bm25_retriever = BM25Retriever.from_documents(split_data)
-    neuro_retriever = db.as_retriever()
-
-    bm25_retriever_weight = 0.5
-
-    ensemble_retriever = EnsembleRetriever(
-          retrievers=[bm25_retriever, neuro_retriever], weights=[bm25_retriever_weight, 1 - bm25_retriever_weight]
-    )
-
-    return ensemble_retriever

@@ -194,3 +194,18 @@ streamlist app functional
 NOTE: chunking has nothing to do with the validation dataset, the same dataset can be used for different chunking mechanisms
 
 check how much is k for retriever
+
+28 February 2024 15:02:16
+
+query transformation should be off for evaluation since the questions are already well formatted in the evaluation dataset
+
+TODOS: 
+
+-source tracing (maybe UI)
+- evaluate max number of retrieved documents
+- finish report
+- analyze chunking_configuration data for question with bad metrics (to put in the report)
+- clean clode
+- make sure conda env working
+- maybe do buffering for ensemble retriever (before streamlit runs) and evaluate weight of retriever
+- ** deploy on streamlit cloud

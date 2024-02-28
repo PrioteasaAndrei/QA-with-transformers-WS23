@@ -29,8 +29,11 @@ John Ziegler (ziegler@informatik.uni-heidelberg.de)
 Use the following command to start the app:
 
 ```
+conda env create -f environment.yml
 python -m streamlit run src/streamlit_app.py
 ```
+
+Note: the Ensemble Retriever (https://python.langchain.com/docs/modules/data_connection/retrievers/ensemble) used by the IR component (BM25 retriever + dense retriever) takes about 5 minutes to load some of the data in memory. This is because, by default, the langchain BM25 retriever can only hold the documents in memory and writing them to disk for retrieval is not trivial. After posing a question expect an inference time of 1-5 minutes.
 
 ## Introduction
 With the recent advancements of Large Language Models (LLMs) interest in domain-specific applications powered by LLMs has increased. In particular, language models can assist experts in the medical domain most commonly by answering questions against a knowlegde base.
@@ -90,6 +93,10 @@ RAGAs validation metrics for Sentence Transformer 400 chunking, no ensemble retr
  'context_recall': 0.9253731343283582,
  'faithfulness': 0.825542328042328}
 
+configuration,answer_relevancy,context_precision,context_recall
+0,pubmedbert-sentence-transformer-100,0.8520767760246581,0.9253731342358208,0.9253731343283582
+
+
 <!-- Use ✅ or  ❌ -->
 | Text Splitter\Chunk Size | 50 | 100 | 200 | 400 |
 |--------------------------|----|-----|-----|-----|
@@ -99,6 +106,10 @@ RAGAs validation metrics for Sentence Transformer 400 chunking, no ensemble retr
 For easy access to the vector database, irrespective of the machine on which our QA system is run we created an Elasticsearch instance on Elastic Cloud. Other reasons for choosing Elasticsearch were its compatibility with Langchain and the costs for maintaining the vector database.
 
 Each index has the same underlying retrieval strategy, namely a [Hybrid ApproxRetrievalStrategy](https://python.langchain.com/docs/integrations/vectorstores/elasticsearch#approxretrievalstrategy), which uses a combination of approximate semantic search and keyword based search. 
+
+## Information Retrieval
+
+TO BE REPHRASED: The IR component uses an ensemble retriever combined with ... 
 
 ### Text Retrieval with Query Transformation
 
