@@ -119,6 +119,8 @@ TO BE REPHRASED: The IR component uses an ensemble retriever combined with ...
 
 ### User Interface
 
+By using caching we were able to decrease the answer time from 15.785237812311 seconds to 3.9000279903411865 seconds
+
 ## Experimental Setup and Results
 
 ## Conclusions and Future Work
