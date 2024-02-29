@@ -3,7 +3,7 @@
 A user-friendly QA system designed to answer questions on medical data concerning intelligence from Pubmed abstracts.  
 
 **Team Members**
-- Cristi Andrei Prioteasa (cristi.prioteasa@stud.uni-heidelberg.de) - (matriculation number), Master Data and Computer Science, Heidelberg University.
+- Cristi Andrei Prioteasa (cristi.prioteasa@stud.uni-heidelberg.de) - 4740844, Master Data and Computer Science, Heidelberg University.
 - Mara-Eliana Popescu (mara-eliana.popescu@stud.uni-heidelberg.de) - 4166979, Master of Data and Computer Science, Heidelberg University.
 - Alper Dağgez (ro312@stud.uni-heidelberg.de) - (matriculation number), Master of Data and Computer Science, Heidelberg University.
 
