@@ -3,7 +3,7 @@
 A user-friendly QA system designed to answer questions on medical data concerning intelligence from Pubmed abstracts.  
 
 **Team Members**
-- Cristi Andrei Prioteasa (cristi.prioteasa@stud.uni-heidelberg.de) - (matriculation number), Master Data and Computer Science, Heidelberg University.
+- Cristi Andrei Prioteasa (cristi.prioteasa@stud.uni-heidelberg.de) - 4740844, Master Data and Computer Science, Heidelberg University.
 - Mara-Eliana Popescu (mara-eliana.popescu@stud.uni-heidelberg.de) - 4166979, Master of Data and Computer Science, Heidelberg University.
 - Alper Dağgez (ro312@stud.uni-heidelberg.de) - (matriculation number), Master of Data and Computer Science, Heidelberg University.
 
@@ -102,6 +102,15 @@ configuration,answer_relevancy,context_precision,context_recall
 |--------------------------|----|-----|-----|-----|
 | [RecursiveCharacterTextSplitter](https://python.langchain.com/docs/modules/data_connection/document_transformers/recursive_text_splitter) |❌ | ❌ | ✅ | ✅ |
 | [SentenceTransformersTokenTextSplitter](https://python.langchain.com/docs/modules/data_connection/document_transformers/split_by_token) | ✅ | ✅ | ✅ | ✅ |
+
+Influence of weight of ensemble retriever (weight of BM25 retriever). Only measured context_precision (asta are sens)
+
+Might have fucked up the experiment
+
+context_precision: 0.9200, 0.9200, 0.9200
+BM25 retriever weight: 0.5, 0.7, 1
+
+Inference time using llama2 (Ollama) on a RTX 3050 Ti 4 GB VRAM , 16 GB RAM, I7 10th generation, max_retrieved_docs = 50, used_tokens= 8295: 3 mins 53 seconds
 
 For easy access to the vector database, irrespective of the machine on which our QA system is run we created an Elasticsearch instance on Elastic Cloud. Other reasons for choosing Elasticsearch were its compatibility with Langchain and the costs for maintaining the vector database.
 
