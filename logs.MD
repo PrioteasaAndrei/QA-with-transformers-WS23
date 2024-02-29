@@ -201,7 +201,7 @@ query transformation should be off for evaluation since the questions are alread
 
 TODOS: 
 
--source tracing (maybe UI)
+-source tracing (maybe UI) ✅
 - evaluate max number of retrieved documents
 - finish report
 - analyze chunking_configuration data for question with bad metrics (to put in the report)
