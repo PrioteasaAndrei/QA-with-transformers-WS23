@@ -22,7 +22,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 ELASTIC_CLOUD_ID = os.getenv("ELASTIC_CLOUD_ID")
 ELASTIC_API_KEY = os.getenv("ELASTIC_API_KEY")
 
-model_id = "openai"
+model_id = "llama2"
 index_name = "pubmedbert-sentence-transformer-100"
 embedding_model = "NeuML/pubmedbert-base-embeddings"
 device = 'cuda:0' 
@@ -56,7 +56,7 @@ st.write("This is a chatbot that can answer questions related to PubMed articles
 @st.cache_resource
 def load_ensemble_retriever(index_name,_elastic_vector_search):
     text_splitter = get_splitter_per_index(index_name)
-    retriever = create_ensemble_retriever(_elastic_vector_search, text_splitter, neuro_weight=0.5)
+    retriever = create_ensemble_retriever(_elastic_vector_search, text_splitter, neuro_weight=0.5, max_retrieved_docs=30)
     return retriever
 
 ## buffer ensemble retriever for consecutive uses
@@ -139,11 +139,12 @@ def generate_response(input_text):
     start_time = time.time()
     rewrite_llm = llm  
     rewriter = rewrite_prompt | rewrite_llm | StrOutputParser() | _parse
-    rewritten_input_text = rewriter.invoke({"x": input_text})   
+    rewritten_input_text = rewriter.invoke({"x": input_text})  
+    rewritten_input_text = input_text 
     logging.info(f"Original input: {input_text}. Transformed input: {rewritten_input_text}")    
     # answer = rag(rewritten_input_text)
 
-    unfiltered_docs = ensemble_retriever.invoke(rewritten_input_text,30)
+    unfiltered_docs = ensemble_retriever.invoke(rewritten_input_text)
     unformatted_docs = reduntant_filter.transform_documents(unfiltered_docs)
     docs = [x.to_document() for x in unformatted_docs]
 
@@ -220,6 +221,6 @@ if prompt := st.chat_input():
     st.session_state.messages.append({"role": "user", "content": prompt})
     st.chat_message("user").write(prompt)
     # msg = generate_response(prompt)
-    msg = generate_response_with_sources(prompt)
+    msg = generate_response(prompt)
     st.session_state.messages.append({"role": "assistant", "content": msg})
     st.chat_message("assistant").write(msg)
