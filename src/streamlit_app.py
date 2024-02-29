@@ -10,6 +10,9 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain.schema import format_document
 import logging
 import time
+from langchain_community.llms import Ollama
+from langchain_community.document_transformers.embeddings_redundant_filter import *
+from langchain.chains import LLMChain
 
 st.set_page_config(page_title="💬 PubMed ChatBot")
 
@@ -19,8 +22,8 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 ELASTIC_CLOUD_ID = os.getenv("ELASTIC_CLOUD_ID")
 ELASTIC_API_KEY = os.getenv("ELASTIC_API_KEY")
 
-model_id = "llama2:latest"
-index_name = "pubmedbert-sentence-transformer-400"
+model_id = "openai"
+index_name = "pubmedbert-sentence-transformer-100"
 embedding_model = "NeuML/pubmedbert-base-embeddings"
 device = 'cuda:0' 
 
@@ -64,14 +67,26 @@ def _parse(text):
     return text.strip("**")
 
 @st.cache_resource
-def get_llm():
-    llm = ChatOpenAI(temperature=0,openai_api_key=OPENAI_API_KEY)
+def get_llm(model_id="openai"):
+    if model_id == "openai":
+        llm = ChatOpenAI(temperature=0,openai_api_key=OPENAI_API_KEY)
+    elif model_id == "llama2":
+        llm = Ollama(model=model_id)
+    else:
+        raise ValueError(f"model_id {model_id} not supported")
+    
     return llm
 
-llm = get_llm()
+llm = get_llm(model_id)
 
 @st.cache_resource
-def get_retrieval_chain():
+def get_retrieval_chain(chain_type='unique_docs'):
+
+    if chain_type == "unique_docs":
+        # Chain
+        qa_chain = LLMChain(llm=llm, prompt=QA_PROMPT)
+        return qa_chain
+
     rag = RetrievalQA.from_chain_type(
         llm=llm,
         chain_type="stuff",
@@ -82,7 +97,7 @@ def get_retrieval_chain():
     )
     return rag
 
-rag = get_retrieval_chain()
+rag = get_retrieval_chain("retrieval qa")
 
 @st.cache_resource
 def get_rewrite_prompt():
@@ -90,6 +105,33 @@ def get_rewrite_prompt():
     return rewrite_prompt
 
 rewrite_prompt = get_rewrite_prompt()
+
+@st.cache_resource
+def get_reduntant_filter():
+    reduntant_filter = EmbeddingsRedundantFilter(embeddings=embeddings, threshold=0.9) ## default is cosine similarity
+    return reduntant_filter
+
+reduntant_filter = get_reduntant_filter()
+
+@st.cache_resource
+def get_qa_prompt():
+    QA_PROMPT = PromptTemplate(
+        input_variables=["query", "contexts"],
+        template="""You are a helpful assistant who answers user queries using the
+        contexts provided. If the question cannot be answered using the information
+        provided say "I don't know". Limit your answers to maximum 100 words.
+
+        Contexts:
+        {contexts}
+
+        Question: {query}""",
+    )
+    return QA_PROMPT
+
+QA_PROMPT = get_qa_prompt()
+
+qa_chain = get_retrieval_chain("unique_docs")
+
 
 def generate_response(input_text):
     global rag
@@ -99,10 +141,25 @@ def generate_response(input_text):
     rewriter = rewrite_prompt | rewrite_llm | StrOutputParser() | _parse
     rewritten_input_text = rewriter.invoke({"x": input_text})   
     logging.info(f"Original input: {input_text}. Transformed input: {rewritten_input_text}")    
-    answer = rag(rewritten_input_text)
+    # answer = rag(rewritten_input_text)
+
+    unfiltered_docs = ensemble_retriever.invoke(rewritten_input_text,30)
+    unformatted_docs = reduntant_filter.transform_documents(unfiltered_docs)
+    docs = [x.to_document() for x in unformatted_docs]
+
+    
+    out = qa_chain(
+        inputs={
+            "query": rewritten_input_text,
+            "contexts": "\n---\n".join([d.page_content for d in docs])
+        }
+    )
+    answer = out["text"]
+
     end_time = time.time()
     logging.info(f"Time taken to generate response: {end_time - start_time} seconds")
-    return answer['result']
+    # return answer['result']
+    return answer
 
 def generate_response_with_sources(input_text):
     # rag = rag_pipeline(model_id, index_name,use_openai=True,retriever_type='ensemble')

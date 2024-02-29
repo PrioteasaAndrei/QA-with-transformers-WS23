@@ -209,4 +209,15 @@ TODOS:
 - make sure conda env working X
 - maybe do buffering for ensemble retriever (before streamlit runs) and evaluate weight of retriever X
 - ** deploy on streamlit cloud
-- analyze weight of ensemble retriever
+- analyze weight of ensemble retriever X
+
+
+29 February 2024 14:25:40
+
+TODO:
+-investigate duplicate elements in retriever
+    they are identical checked with diff
+    -check if index has duplicates
+    -check if retriever brings duplicates
+
+    Workaround: filter documents based on cosine similairty in rag pipeline. Ideal would be to eliminate duplicates from index
