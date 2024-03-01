@@ -25,7 +25,7 @@ logging.basicConfig(filename='query_transformation.log', level=logging.DEBUG,
 def get_argparser():
     argparser = argparse.ArgumentParser(description="Chatbot for PubMed articles")
     argparser.add_argument("--model_id", type=str, default="llama2",help="Model ID for the language model. Can be either llama2 or openai.")
-    argparser.add_argument("--index_name", type=str, default="pubmedbert-sentence-transformer-100", help="Index name for the ElasticSearch database. Options are pubmedbert-sentence-transformer-500, pubmedbert-sentence-transformer-100, pubmedbert-sentence-transformer-200, pubmedbert-sentence-transformer-400, pubmedbert-recursive-character-400-overlap-50.")
+    argparser.add_argument("--index_name", type=str, default="pubmedbert-sentence-transformer-100", help="Index name for the ElasticSearch database. Options are  pubmedbert-sentence-transformer-100, pubmedbert-sentence-transformer-200, pubmedbert-sentence-transformer-400, pubmedbert-recursive-character-400-overlap-50.")
     return argparser.parse_args()
 
 argparser = get_argparser()

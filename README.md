@@ -28,13 +28,20 @@ John Ziegler (ziegler@informatik.uni-heidelberg.de)
 ## Getting Started
 Use the following command to start the app:
 
-Local URL: http://localhost:8501
-Network URL: http://147.142.152.35:8501
-
 ```
 conda env create -f environment.yml
 python -m streamlit run src/streamlit_app.py
 ```
+
+model_id can be: [openai, llama2]
+index_name can be:  [pubmedbert-sentence-transformer-100, pubmedbert-sentence-transformer-200, pubmedbert-sentence-transformer-400, pubmedbert-recursive-character-400-overlap-50]
+```
+streamlit run .\src\streamlit_app.py -- --model_id model_id --index_name index_name 
+```
+pubmed-sentence-transformer-100
+Make sure port 8501 is not used by another process.
+Local URL: http://localhost:8501
+Network URL: http://147.142.152.35:8501
 
 Note: the Ensemble Retriever (https://python.langchain.com/docs/modules/data_connection/retrievers/ensemble) used by the IR component (BM25 retriever + dense retriever) takes about 5 minutes to load some of the data in memory. This is because, by default, the langchain BM25 retriever can only hold the documents in memory and writing them to disk for retrieval is not trivial. After posing a question expect an inference time of 1-5 minutes.
 
