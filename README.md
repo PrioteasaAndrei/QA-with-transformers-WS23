@@ -51,8 +51,10 @@ Our pipeline consists of the following stages:
 <ol>
   <li><a href="#data-acquisition">Data Acquisition</a></li>
   <li><a href="#chunking-and-vectorization">Chunking and Vectorization</a></li>
-  <li><a href="#text-retrieval-and-query-transformation">Text Retrieval and Query Transformation</a></li>
+  <li><a href="#information-retrieval">Information Retrieval</a></li>
+  <li><a href="#query-transformation">Query Transformation</a></li>
   <li><a href="#response-generation">Response Generation</a></li>
+  <li><a href="#reference-sources">Reference Sources</a></li>
   <li><a href="#evaluation-methods">Evaluation Methods</a></li>
   <li><a href="#user-interface">User Interface</a></li>
 </ol>
@@ -85,7 +87,54 @@ Our system uses the [PubMedBERT Embeddings](https://huggingface.co/NeuML/pubmedb
 
 We experimented with a couple of chunking strategies employing the Langchain Text Splitters. Besides selecting the text splitter, we tried out different chunk sizes to find a good fit. The embedding model expects as input a sequence no longer than 512 tokens, thus limiting the chunk size. The following table shows all the combinations we used:
 
+<!-- Use ✅ or  ❌ -->
+| Text Splitter\Chunk Size | 50 | 100 | 200 | 400 |
+|--------------------------|----|-----|-----|-----|
+| [RecursiveCharacterTextSplitter](https://python.langchain.com/docs/modules/data_connection/document_transformers/recursive_text_splitter) |❌ | ❌ | ❌ | ✅ |
+| [SentenceTransformersTokenTextSplitter](https://python.langchain.com/docs/modules/data_connection/document_transformers/split_by_token) | ✅ | ✅ | ✅ | ✅ |
 
+For easy access to the vector database, irrespective of the machine on which our QA system is run we created an Elasticsearch instance on Elastic Cloud. Other reasons for choosing Elasticsearch were its compatibility with Langchain and the costs for maintaining the vector database.
+
+Each index has the same underlying retrieval strategy, namely a [Hybrid ApproxRetrievalStrategy](https://python.langchain.com/docs/integrations/vectorstores/elasticsearch#approxretrievalstrategy), which uses a combination of approximate semantic search and keyword based search.
+ 
+### Information Retrieval
+
+The information retrieval component of our system is based on an [Ensemble Retriever](https://python.langchain.com/docs/modules/data_connection/retrievers/ensemble) combining the sparse retriever [BM25](https://python.langchain.com/docs/integrations/retrievers/bm25) with the hybrid retriever of our Elasticsearch index. The results of both retrievers are reranked using [Reciprocal Rank Fusion](https://plg.uwaterloo.ca/~gvcormac/cormacksigir09-rrf.pdf).
+Since the hybrid retrieval strategy of our Elasticsearch index already combines lexical and semantic search, the resulting ensemble retriever emphasizes the lexical search, which is a preferred strategy in the medical field where certain keywords cannot be semantically approximated through other words.
+
+Given an arbitrary query, our system retrieves the first $k=3$ documents that would be relevant for answer generation and passes them on to the generative component. 
+We still need to experiment with the hyperparameter $k$.
+
+One peculiarity we noticed while evaluating this component of our system is that duplicates appear among the retrieved documents. This behaviour becomes worse upon increasing $k$. To solve this problem, we used an [EmbeddingsRedundantFilter](https://api.python.langchain.com/en/latest/document_transformers/langchain_community.document_transformers.embeddings_redundant_filter.EmbeddingsRedundantFilter.html), which identifies similar documents and filters out redundant content.
+
+### Query Transformation
+The quality of the retrieved documents is also highly influenced by the quality of the query. Two problems that come up regarding the queries are that user questions may be poorly worded for retrieval or that the user questions may contain misleading or irrelevant information.
+
+To address these problems, we adopted the [Rewrite-Retrieve-Read](https://arxiv.org/pdf/2305.14283.pdf?ref=blog.langchain.dev) approach to transform the user's query. To put it in a nutshell, our system first prompts a LLM to rewrite the query and then uses the rewritten query to retrieve relevant documents.
+
+(Multi Query Retrieval ?)
+
+### Response Generation
+
+Currently, our system relies on OpenAI's model `gpt-3.5-turbo` to generate the answer using the rewritten query and the retrieved documents. In our experiments we also employed Meta's `llama2` model with 7B parameters and 4-bit quantization, provided through [Ollama](https://ollama.com/). In the end we settled for the former model to be able to host our QA system on [Streamlit Community Cloud](https://streamlit.io/cloud). If the user wants to test our system in a local environment, it is possible to switch from `gpt-3.5-turbo` to `llama2`. The two LLM's are comparable in terms of performance.
+
+We faced certain problems at this stage of our project like resource limitations on our local machines or on Google Colab, nonavailability of certain packages or softwares on Windows systems (bitsandbytes, until recently Ollama as well), slow inference times both locally and on Google Colab before we started working with Ollama and OpenAI's API.
+
+### Reference Sources 
+
+Since the response generation relies on multiple documents, we deemed it necessary that our system accurately back-references the used sources. To this end we extended the prompt template to ask the generative LLM to cite the retrieved documents using the stored metadata. More specifically, each answer will contain at the end a list of sources as in the following example:
+
+![Image](images/source_tracing.png)
+
+### Evaluation Methods
+
+
+
+### User Interface
+
+By using caching we were able to decrease the answer time from 15.785237812311 seconds to 3.9000279903411865 seconds
+
+## Experimental Setup and Results
 RAGAs validation metrics for Sentence Transformer 400 chunking, no ensemble retriever, read-write-retrieve query transformation, Chat GPT 3.5. Turbo for both the rewritter and generation part, pubmedbert embeddings.
 
 {'answer_relevancy': 0.8942793135767543,
@@ -96,13 +145,6 @@ RAGAs validation metrics for Sentence Transformer 400 chunking, no ensemble retr
 configuration,answer_relevancy,context_precision,context_recall
 0,pubmedbert-sentence-transformer-100,0.8520767760246581,0.9253731342358208,0.9253731343283582
 
-
-<!-- Use ✅ or  ❌ -->
-| Text Splitter\Chunk Size | 50 | 100 | 200 | 400 |
-|--------------------------|----|-----|-----|-----|
-| [RecursiveCharacterTextSplitter](https://python.langchain.com/docs/modules/data_connection/document_transformers/recursive_text_splitter) |❌ | ❌ | ✅ | ✅ |
-| [SentenceTransformersTokenTextSplitter](https://python.langchain.com/docs/modules/data_connection/document_transformers/split_by_token) | ✅ | ✅ | ✅ | ✅ |
-
 Influence of weight of ensemble retriever (weight of BM25 retriever). Only measured context_precision (asta are sens)
 
 Might have fucked up the experiment
@@ -111,25 +153,5 @@ context_precision: 0.9200, 0.9200, 0.9200
 BM25 retriever weight: 0.5, 0.7, 1
 
 Inference time using llama2 (Ollama) on a RTX 3050 Ti 4 GB VRAM , 16 GB RAM, I7 10th generation, max_retrieved_docs = 50, used_tokens= 8295: 3 mins 53 seconds
-
-For easy access to the vector database, irrespective of the machine on which our QA system is run we created an Elasticsearch instance on Elastic Cloud. Other reasons for choosing Elasticsearch were its compatibility with Langchain and the costs for maintaining the vector database.
-
-Each index has the same underlying retrieval strategy, namely a [Hybrid ApproxRetrievalStrategy](https://python.langchain.com/docs/integrations/vectorstores/elasticsearch#approxretrievalstrategy), which uses a combination of approximate semantic search and keyword based search. 
-
-## Information Retrieval
-
-TO BE REPHRASED: The IR component uses an ensemble retriever combined with ... 
-
-### Text Retrieval with Query Transformation
-
-### Response Generation
-
-### Evaluation Methods
-
-### User Interface
-
-By using caching we were able to decrease the answer time from 15.785237812311 seconds to 3.9000279903411865 seconds
-
-## Experimental Setup and Results
 
 ## Conclusions and Future Work
