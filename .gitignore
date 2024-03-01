@@ -1,3 +1,4 @@
 evaluation_dataset.csv
 .vscode/
 .DS_Store
+__pycache__/
