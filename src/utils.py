@@ -36,7 +36,8 @@ from importlib import reload
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.llms import Ollama
 
-def prepare_llm(auth_token, model_id = "llama2:latest", use_openai=False, **kwargs):
+
+def prepare_llm(auth_token, model_id="llama2:latest", use_openai=False, **kwargs):
     '''
     Initializes an LLM either through Ollama or through OpenAI:
 
@@ -48,52 +49,52 @@ def prepare_llm(auth_token, model_id = "llama2:latest", use_openai=False, **kwar
     '''
     OPENAI_API_KEY = kwargs.get('OPENAI_API_KEY', None)
 
-    if use_openai: 
-        llm = ChatOpenAI(temperature=0,openai_api_key=OPENAI_API_KEY)
+    if use_openai:
+        llm = ChatOpenAI(temperature=0, openai_api_key=OPENAI_API_KEY)
         return llm
+    
+    ## only available on linux / mac
+    bitsAndBites_config = BitsAndBytesConfig(load_in_4bit=True,
+                                             bnb_4bit_compute_dtype=bfloat16,
+                                             bnb_4bit_use_double_quant=True)
 
+    model_config = AutoConfig.from_pretrained(
+        model_id, use_auth_token=auth_token)
 
-    bitsAndBites_config = BitsAndBytesConfig(load_in_4bit = True, 
-                                            bnb_4bit_compute_dtype = bfloat16, 
-                                            bnb_4bit_use_double_quant = True)
-
-    model_config = AutoConfig.from_pretrained(model_id, use_auth_token = auth_token)
-
-    ## TODO: add back bits and bites
     model = AutoModelForCausalLM.from_pretrained(
         model_id,
         # quantization_config = bitsAndBites_config,
-        trust_remote_code = True,
-        torch_dtype=torch.bfloat16, 
-        config = model_config,
-        device_map = 'auto',
-        token = auth_token,
+        trust_remote_code=True,
+        torch_dtype=torch.bfloat16,
+        config=model_config,
+        device_map='auto',
+        token=auth_token,
         # attn_implementation="flash_attention_2",
     )
 
-    ##supported natively by llama
+    # supported natively by llama
     # model = model.to_bettertransformer()
 
-    model.eval()# we only use the model for inference
+    model.eval()  # we only use the model for inference
     print(f"Model loaded ")
 
-    
-    tokenizer = AutoTokenizer.from_pretrained(model_id, use_auth_token = auth_token)
+    tokenizer = AutoTokenizer.from_pretrained(
+        model_id, use_auth_token=auth_token)
 
     generate_text = transformers.pipeline(
-        model = model, 
-        tokenizer = tokenizer,
-        return_full_text = True,
-        task = 'text-generation',
-        temperature = 0.01,
-        max_new_tokens = 200,  # max number of tokens to generate in the output
-        repetition_penalty = 1.1,  # without this output begins repeating,
+        model=model,
+        tokenizer=tokenizer,
+        return_full_text=True,
+        task='text-generation',
+        temperature=0.01,
+        max_new_tokens=200,  # max number of tokens to generate in the output
+        repetition_penalty=1.1,  # without this output begins repeating,
         # device= 'cuda:0'
     )
 
-    llm = HuggingFacePipeline(pipeline = generate_text)
-
+    llm = HuggingFacePipeline(pipeline=generate_text)
     return llm
+
 
 def _parse(text):
     return text.strip("**")
@@ -102,21 +103,26 @@ def _parse(text):
 def get_splitter_per_index(index_name: str):
     splitter = None
     if index_name == "pubmedbert-sentence-transformer-400":
-        splitter = SentenceTransformersTokenTextSplitter(chunk_overlap=10,model_name="NeuML/pubmedbert-base-embeddings",tokens_per_chunk=400)
+        splitter = SentenceTransformersTokenTextSplitter(
+            chunk_overlap=10, model_name="NeuML/pubmedbert-base-embeddings", tokens_per_chunk=400)
     elif index_name == 'pubmedbert-sentence-transformer-50':
-        splitter = SentenceTransformersTokenTextSplitter(chunk_overlap=10,model_name="NeuML/pubmedbert-base-embeddings",tokens_per_chunk=50)
+        splitter = SentenceTransformersTokenTextSplitter(
+            chunk_overlap=10, model_name="NeuML/pubmedbert-base-embeddings", tokens_per_chunk=50)
     elif index_name == 'pubmedbert-sentence-transformer-100':
-        splitter = SentenceTransformersTokenTextSplitter(chunk_overlap=10,model_name="NeuML/pubmedbert-base-embeddings",tokens_per_chunk=100)
+        splitter = SentenceTransformersTokenTextSplitter(
+            chunk_overlap=10, model_name="NeuML/pubmedbert-base-embeddings", tokens_per_chunk=100)
     elif index_name == 'pubmedbert-recursive-character-400-overlap-50':
-        splitter = RecursiveCharacterTextSplitter(chunk_size=400, chunk_overlap=50, length_function=len, is_separator_regex=False)
+        splitter = RecursiveCharacterTextSplitter(
+            chunk_size=400, chunk_overlap=50, length_function=len, is_separator_regex=False)
 
-    ## check if splitter is none
+    # check if splitter is none
     if splitter is None:
         raise ValueError(f"Index {index_name} is not supported")
-    
+
     return splitter
 
-def rag_pipeline(model_id: str, 
+
+def rag_pipeline(model_id: str,
                  index_name: str,
                  use_openai: bool = False,
                  retriever_type="ensemble"):
@@ -136,65 +142,71 @@ def rag_pipeline(model_id: str,
     ELASTIC_API_KEY = os.getenv('ELASTIC_API_KEY')
     OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
     embedding_model = "NeuML/pubmedbert-base-embeddings"
-    device = 'cuda:0' 
+    device = 'cuda:0'
 
     embeddings = HuggingFaceEmbeddings(
-        model_name = embedding_model,
-        model_kwargs = {'device': device},
-        encode_kwargs = {'device': device}
+        model_name=embedding_model,
+        model_kwargs={'device': device},
+        encode_kwargs={'device': device}
     )
 
     elastic_vector_search = ElasticsearchStore(
-        es_cloud_id = ELASTIC_CLOUD_ID,
-        index_name = index_name,
-        embedding = embeddings,
-        es_api_key = ELASTIC_API_KEY
+        es_cloud_id=ELASTIC_CLOUD_ID,
+        index_name=index_name,
+        embedding=embeddings,
+        es_api_key=ELASTIC_API_KEY
     )
-    ## TODO: replace with ensemble retriever
+
     if retriever_type == "ensemble":
         text_splitter = get_splitter_per_index(index_name)
-        retriever = create_ensemble_retriever(elastic_vector_search, text_splitter, neuro_weight=0.5)
+        retriever = create_ensemble_retriever(
+            elastic_vector_search, text_splitter, neuro_weight=0.5)
     else:
-        retriever = elastic_vector_search.as_retriever(search_kwargs={"k":3})
+        retriever = elastic_vector_search.as_retriever(search_kwargs={"k": 3})
 
-    llm = prepare_llm(HUGGINGFACE_TOKEN,model_id,use_openai,OPENAI_API_KEY=OPENAI_API_KEY)
-    
+    llm = prepare_llm(HUGGINGFACE_TOKEN, model_id,
+                      use_openai, OPENAI_API_KEY=OPENAI_API_KEY)
+
     print("Preparing RAG pipeline...")
     rag_pipeline = RetrievalQA.from_chain_type(
         llm=llm,
         chain_type="stuff",
         verbose=True,
-        retriever = retriever,
+        retriever=retriever,
         chain_type_kwargs={
-            "verbose": True },
+            "verbose": True},
     )
     print("RAG pipeline ready.")
     return rag_pipeline
 
 
-def create_ensemble_retriever(neuro_retriever,text_splitter, neuro_weight=0.5,max_retrieved_docs=3):
+def create_ensemble_retriever(neuro_retriever, text_splitter, neuro_weight=0.5, max_retrieved_docs=3):
 
     load_dotenv()
     HUGGINGFACE_TOKEN = os.getenv('HUGGINGFACE_TOKEN')
     HUGGINGFACE_DATASET_NAME = os.getenv('HUGGINGFACE_DATASET_NAME')
 
-    ## load and split the data
-    loader = HuggingFaceDatasetLoader(HUGGINGFACE_DATASET_NAME,use_auth_token=HUGGINGFACE_TOKEN,page_content_column='abstract')
+    # load and split the data
+    loader = HuggingFaceDatasetLoader(
+        HUGGINGFACE_DATASET_NAME, use_auth_token=HUGGINGFACE_TOKEN, page_content_column='abstract')
     data = loader.load()
 
     split_data = text_splitter.split_documents(data)
 
     bm25_retriever = BM25Retriever.from_documents(split_data)
-    neuro_retriever = neuro_retriever.as_retriever(search_kwargs={"k":max_retrieved_docs})
+    neuro_retriever = neuro_retriever.as_retriever(
+        search_kwargs={"k": max_retrieved_docs})
 
     ensemble_retriever = EnsembleRetriever(
-        retrievers=[bm25_retriever, neuro_retriever], weights=[neuro_weight, 1 - neuro_weight]
+        retrievers=[bm25_retriever, neuro_retriever], weights=[
+            neuro_weight, 1 - neuro_weight]
     )
     retriever = ensemble_retriever
 
     return retriever
 
-def run_config(elastic_vector_search : ElasticsearchStore,
+
+def run_config(elastic_vector_search: ElasticsearchStore,
                use_ensemble_retriever: bool,
                verbose: bool = True,
                config_name: str = 'default_config',
@@ -227,11 +239,10 @@ def run_config(elastic_vector_search : ElasticsearchStore,
     save_path = kwargs.get('save_path', None)
     max_retrieved_docs = kwargs.get('max_retrieved_docs', 3)
     OPENAI_API_KEY = kwargs.get('OPENAI_API_KEY', None)
-    
 
     if index_name is None or evaluation_dataset_path is None or HUGGINGFACE_TOKEN is None or HUGGINGFACE_DATASET_NAME is None or llm is None:
         raise ValueError("Missing parameters")
-    
+
     if not elastic_vector_search.client.indices.exists(index=index_name):
         raise ValueError(f"Index {index_name} does not exist")
 
@@ -240,31 +251,31 @@ def run_config(elastic_vector_search : ElasticsearchStore,
 
     retriever = elastic_vector_search
 
-    ## define RAG pipeline
-
+    # define RAG pipeline
     rag_pipeline = RetrievalQA.from_chain_type(
         llm=llm,
         chain_type="stuff",
         verbose=verbose,
-        retriever = elastic_vector_search.as_retriever(search_kwargs={"k":max_retrieved_docs}), ##TODO: increase later to see influence
+        retriever=elastic_vector_search.as_retriever(
+            search_kwargs={"k": max_retrieved_docs}), 
         chain_type_kwargs={
-            "verbose": verbose },
+            "verbose": verbose},
 
     )
 
     if verbose:
         print("Successfully loaded RAG pipeline")
 
-    ## build ensemble retriever if needed
-
+    # build ensemble retriever if needed
     if use_ensemble_retriever:
-        ## seems like the only way is to hold the documents in memory: https://github.com/langchain-ai/langchain/discussions/10619
+        # seems like the only way is to hold the documents in memory: https://github.com/langchain-ai/langchain/discussions/10619
 
         if verbose:
             print("Building ensemble retriever")
 
-        ## load and split the data
-        loader = HuggingFaceDatasetLoader(HUGGINGFACE_DATASET_NAME,use_auth_token=HUGGINGFACE_TOKEN,page_content_column='abstract')
+        # load and split the data
+        loader = HuggingFaceDatasetLoader(
+            HUGGINGFACE_DATASET_NAME, use_auth_token=HUGGINGFACE_TOKEN, page_content_column='abstract')
         data = loader.load()
 
         split_data = text_splitter.split_documents(data)
@@ -275,26 +286,27 @@ def run_config(elastic_vector_search : ElasticsearchStore,
         bm25_retriever_weight = 0.5
 
         ensemble_retriever = EnsembleRetriever(
-            retrievers=[bm25_retriever, neuro_retriever], weights=[bm25_retriever_weight, 1 - bm25_retriever_weight]
+            retrievers=[bm25_retriever, neuro_retriever], weights=[
+                bm25_retriever_weight, 1 - bm25_retriever_weight]
         )
         retriever = ensemble_retriever
 
-    ## Load the evaluation dataset
-    eval_dataset = load_dataset(evaluation_dataset_path,token=QA_VALIDATION_TOKEN)['train']
+    # Load the evaluation dataset
+    eval_dataset = load_dataset(
+        evaluation_dataset_path, token=QA_VALIDATION_TOKEN)['train']
 
     if verbose:
         print("Successfully loaded evaluation dataset")
 
-    ## iterate with tqdm over dataset
-
+    # iterate with tqdm over dataset
     answers = []
-    
-    ## TODO: vecotrize this
-    for example in tqdm(eval_dataset,desc="generate RAG answers"):
+
+    # NOTE: this should be vectorized
+    for example in tqdm(eval_dataset, desc="generate RAG answers"):
         query = example['question']
         ragas_answer_gpt = example['ground_truth'][0]
         ragas_context = example['ground_truth_context'][0]
-        
+
         top_k = 5
 
         # returned_docs = call_similartiy(retriever,query,top_k)
@@ -302,9 +314,8 @@ def run_config(elastic_vector_search : ElasticsearchStore,
         answer = rag_pipeline(query)
         answers.append(answer)
 
-    
     if save:
-        field_names = ['query','result']
+        field_names = ['query', 'result']
 
         # Write the list of dictionaries to a CSV file
         with open(save_path, 'w', newline='') as csv_file:
@@ -316,52 +327,57 @@ def run_config(elastic_vector_search : ElasticsearchStore,
             # Write the data
             writer.writerows(answers)
 
-    ## list[{'query': str,'result':str}]
+    # list[{'query': str,'result':str}]
     return answers
 
-def call_similartiy(retriever,query, top_k=5,is_ensemble=False):
+
+def call_similartiy(retriever, query, top_k=5, is_ensemble=False):
     '''
     Call the similarity method of the retriever
     '''
     if is_ensemble:
-        return retriever.invoke(query,top_k)
+        return retriever.invoke(query, top_k)
     else:
-        return retriever.get_relevant_documents(query,top_k)
+        return retriever.get_relevant_documents(query, top_k)
 
-def testset_to_validation(save=False,**kwargs):
+
+def testset_to_validation(save=False, **kwargs):
 
     QA_VALIDATION_DATASET = kwargs.get('QA_VALIDATION_DATASET', None)
     QA_VALIDATION_TOKEN = kwargs.get('QA_VALIDATION_TOKEN', None)
     save_path_answers = kwargs.get('save_path', None)
     save_path_result = kwargs.get('save_path_result', None)
 
-    eval_dataset = load_dataset(QA_VALIDATION_DATASET,token=QA_VALIDATION_TOKEN)['train']
+    eval_dataset = load_dataset(
+        QA_VALIDATION_DATASET, token=QA_VALIDATION_TOKEN)['train']
 
     df = pd.read_csv(save_path_answers)
 
-    ## join them on the query vs question
+    # join them on the query vs question
 
-    result_df = pd.merge(df, eval_dataset.to_pandas(), left_on='query', right_on='question', how='inner')
+    result_df = pd.merge(df, eval_dataset.to_pandas(),
+                         left_on='query', right_on='question', how='inner')
 
-    result_df = result_df.drop(columns=['query','question_type','episode_done'])
-    ## first parse the ground_truth and ground_truth context by \n
-    columns_mapping = {'question': 'question', 'result': 'answer', 'ground_truth_context':'contexts'} #'ground_truth': 'ground_truths',
+    result_df = result_df.drop(
+        columns=['query', 'question_type', 'episode_done'])
+    # first parse the ground_truth and ground_truth context by \n
+    columns_mapping = {'question': 'question', 'result': 'answer',
+                       'ground_truth_context': 'contexts'}  # 'ground_truth': 'ground_truths',
     result_df = result_df.rename(columns=columns_mapping)
-    
+
     result_df['contexts'] = result_df['contexts'].apply(lambda x: [x])
     # result_df['ground_truth'] = result_df['ground_truth'].apply(lambda x: [x])
 
     if save:
-        result_df.to_csv(save_path_result,index=False)
+        result_df.to_csv(save_path_result, index=False)
 
     result_df_dataset = Dataset.from_pandas(result_df)
-        
+
     return result_df_dataset
 
 
-
 def index_docs(data, text_splitter, index_name, **kwargs):
-        
+
     ELASTIC_CLOUD_ID = kwargs.get('ELASTIC_CLOUD_ID', None)
     ELASTIC_API_KEY = kwargs.get('ELASTIC_API_KEY', None)
     embeddings = kwargs.get('embeddings', None)
