@@ -13,18 +13,32 @@ import time
 from langchain_community.llms import Ollama
 from langchain_community.document_transformers.embeddings_redundant_filter import *
 from langchain.chains import LLMChain
+import argparse
 
 st.set_page_config(page_title="💬 PubMed ChatBot")
 
+## logging and arg parsing
 logging.basicConfig(filename='query_transformation.log', level=logging.DEBUG,
                     format='%(asctime)s - %(levelname)s - %(message)s')
+
+@st.cache_resource
+def get_argparser():
+    argparser = argparse.ArgumentParser(description="Chatbot for PubMed articles")
+    argparser.add_argument("--model_id", type=str, default="llama2",help="Model ID for the language model. Can be either llama2 or openai.")
+    argparser.add_argument("--index_name", type=str, default="pubmedbert-sentence-transformer-100", help="Index name for the ElasticSearch database. Options are pubmedbert-sentence-transformer-500, pubmedbert-sentence-transformer-100, pubmedbert-sentence-transformer-200, pubmedbert-sentence-transformer-400, pubmedbert-recursive-character-400-overlap-50.")
+    return argparser.parse_args()
+
+argparser = get_argparser()
+
 load_dotenv()  # take environment variables from .env.
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 ELASTIC_CLOUD_ID = os.getenv("ELASTIC_CLOUD_ID")
 ELASTIC_API_KEY = os.getenv("ELASTIC_API_KEY")
 
-model_id = "llama2"
-index_name = "pubmedbert-sentence-transformer-100"
+# model_id = "llama2"
+model_id = argparser.model_id
+index_name = argparser.index_name
+# index_name = "pubmedbert-sentence-transformer-100"
 embedding_model = "NeuML/pubmedbert-base-embeddings"
 device = 'cuda:0'
 

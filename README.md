@@ -28,6 +28,9 @@ John Ziegler (ziegler@informatik.uni-heidelberg.de)
 ## Getting Started
 Use the following command to start the app:
 
+Local URL: http://localhost:8501
+Network URL: http://147.142.152.35:8501
+
 ```
 conda env create -f environment.yml
 python -m streamlit run src/streamlit_app.py
@@ -132,7 +135,7 @@ Since the response generation relies on multiple documents, we deemed it necessa
 
 ### User Interface
 
-By using caching we were able to decrease the answer time from 15.785237812311 seconds to 3.9000279903411865 seconds
+By using caching of the embedding model and db connection,  we were able to decrease the answer time from 15.785237812311 seconds to 3.9000279903411865 seconds.
 
 ## Experimental Setup and Results
 RAGAs validation metrics for Sentence Transformer 400 chunking, no ensemble retriever, read-write-retrieve query transformation, Chat GPT 3.5. Turbo for both the rewritter and generation part, pubmedbert embeddings.
@@ -145,12 +148,12 @@ RAGAs validation metrics for Sentence Transformer 400 chunking, no ensemble retr
 configuration,answer_relevancy,context_precision,context_recall
 0,pubmedbert-sentence-transformer-100,0.8520767760246581,0.9253731342358208,0.9253731343283582
 
-Influence of weight of ensemble retriever (weight of BM25 retriever). Only measured context_precision (asta are sens)
+we analyze the influence of the weight of the ensemble retriever (weight of BM25 retriever) in terms of Context Precision, which is defined as the signal to noise ratio of retrieved context. As we are using PubMed data and we want precise answers we will prioritize the Context Precision over Context Recall.
 
-Might have fucked up the experiment
+context_precision:  0.8800,0.9200, 0.9200, 0.7899, 0.7564
+BM25 retriever weight: 0, 0.3, 0.5, 0.7, 1
 
-context_precision: 0.9200, 0.9200, 0.9200
-BM25 retriever weight: 0.5, 0.7, 1
+Similar results are obtained with a weight of 0.5 or 0.3.
 
 Inference time using llama2 (Ollama) on a RTX 3050 Ti 4 GB VRAM , 16 GB RAM, I7 10th generation, max_retrieved_docs = 50, used_tokens= 8295: 3 mins 53 seconds
 
