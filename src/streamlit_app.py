@@ -15,6 +15,7 @@ from langchain_community.document_transformers.embeddings_redundant_filter impor
 from langchain.chains import LLMChain
 import argparse
 from langchain.chains.query_constructor.base import AttributeInfo
+from langchain.retrievers.self_query.base import SelfQueryRetriever
 
 st.set_page_config(page_title="💬 PubMed ChatBot")
 
@@ -27,7 +28,7 @@ def get_argparser():
     argparser = argparse.ArgumentParser(description="Chatbot for PubMed articles")
     argparser.add_argument("--model_id", type=str, default="openai",help="Model ID for the language model. Can be either llama2 or openai.")
     argparser.add_argument("--index_name", type=str, default="pubmedbert-sentence-transformer-100", help="Index name for the ElasticSearch database. Options are  pubmedbert-sentence-transformer-100, pubmedbert-sentence-transformer-200, pubmedbert-sentence-transformer-400, pubmedbert-recursive-character-400-overlap-50.")
-    argparser.add_argument('--sourcing', type=bool, default=True, help='Whether to include sources in the response. Default is False. If True, the response will include sources.')
+    argparser.add_argument('--sourcing', type=bool, default=False, help='Whether to include sources in the response. Default is False. If True, the response will include sources.')
     argparser.add_argument('--use_ensemble', type=bool, default=False, help='Use ensemble retriever.')
     return argparser.parse_args()
 
@@ -140,19 +141,37 @@ def get_llm(model_id="openai"):
 
 llm = get_llm(model_id)
 
+@st.cache_resource
+def get_self_query_retriever():
+    retriever = SelfQueryRetriever.from_llm(
+        llm,
+        elastic_vector_search,
+        document_content_description,
+        metadata_field_info,
+    )
+    return retriever
+
+## TODO: initialize only if needed in argparser
+self_query_retriever = get_self_query_retriever()
+
 
 @st.cache_resource
-def get_retrieval_chain(chain_type='unique_docs', without_ensemble=True):
+def get_retrieval_chain(chain_type='unique_docs', retriever_type='default'):
     global retriever
     if chain_type == "unique_docs":
         # Chain
         qa_chain = LLMChain(llm=llm, prompt=QA_PROMPT)
         return qa_chain
     chain_retriever = None
-    if without_ensemble:
+
+    if retriever_type == 'self_query':
+        chain_retriever = self_query_retriever
+    elif retriever_type == 'default':
         chain_retriever = retriever
-    else:
+    elif retriever_type == 'ensemble':
         chain_retriever = ensemble_retriever
+    else:
+        raise ValueError(f"retriever_type {retriever_type} not supported")
     
     rag = RetrievalQA.from_chain_type(
         llm=llm,
@@ -164,7 +183,7 @@ def get_retrieval_chain(chain_type='unique_docs', without_ensemble=True):
     )
     return rag
 
-rag = get_retrieval_chain("retrieval qa", without_ensemble=not use_ensemble)
+rag = get_retrieval_chain("retrieval qa", retriever_type="self_query")
 
 @st.cache_resource
 def get_rewrite_prompt():
@@ -271,6 +290,7 @@ def generate_response_with_sources(input_text):
         doc_strings = [format_document(doc, document_prompt) for doc in docs]
         return document_separator.join(doc_strings)
 
+    ## TODO: replace with existing cached retrievers
     retriever = elastic_vector_search.as_retriever(search_kwargs={"k": 30})
 
     _context = {
