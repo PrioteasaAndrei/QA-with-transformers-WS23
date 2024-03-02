@@ -36,7 +36,7 @@ python -m streamlit run src/streamlit_app.py
 model_id can be: [openai, llama2]
 index_name can be:  [pubmedbert-sentence-transformer-100, pubmedbert-sentence-transformer-200, pubmedbert-sentence-transformer-400, pubmedbert-recursive-character-400-overlap-50]
 ```
-streamlit run .\src\streamlit_app.py -- --model_id model_id --index_name index_name 
+streamlit run .\src\streamlit_app.py -- --model_id model_id --index_name index_name  --sourcing False/True --use_ensemble False/True
 ```
 pubmed-sentence-transformer-100
 Make sure port 8501 is not used by another process.

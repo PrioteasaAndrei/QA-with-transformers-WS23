@@ -26,6 +26,8 @@ def get_argparser():
     argparser = argparse.ArgumentParser(description="Chatbot for PubMed articles")
     argparser.add_argument("--model_id", type=str, default="openai",help="Model ID for the language model. Can be either llama2 or openai.")
     argparser.add_argument("--index_name", type=str, default="pubmedbert-sentence-transformer-100", help="Index name for the ElasticSearch database. Options are  pubmedbert-sentence-transformer-100, pubmedbert-sentence-transformer-200, pubmedbert-sentence-transformer-400, pubmedbert-recursive-character-400-overlap-50.")
+    argparser.add_argument('--sourcing', type=bool, default=False, help='Whether to include sources in the response. Default is False. If True, the response will include sources.')
+    argparser.add_argument('--use_ensemble', type=bool, default=False, help='Use ensemble retriever.')
     return argparser.parse_args()
 
 argparser = get_argparser()
@@ -38,10 +40,18 @@ ELASTIC_API_KEY = os.getenv("ELASTIC_API_KEY")
 # model_id = "llama2"
 model_id = argparser.model_id
 index_name = argparser.index_name
+sourcing = argparser.sourcing
+use_ensemble = argparser.use_ensemble
 # index_name = "pubmedbert-sentence-transformer-100"
 embedding_model = "NeuML/pubmedbert-base-embeddings"
 device = 'cuda:0'
 
+
+## print argparse params for debugging
+logging.info(f"Model ID: {model_id}")
+logging.info(f"Index Name: {index_name}")
+logging.info(f"Sourcing: {sourcing}")
+logging.info(f"Use Ensemble: {use_ensemble}")
 
 @st.cache_resource
 def get_embeddings():
@@ -68,6 +78,7 @@ def get_vector_search():
 
 
 elastic_vector_search = get_vector_search()
+retriever = elastic_vector_search.as_retriever(search_kwargs={"k": 30})
 
 st.title('💬 PubMed ChatBot')
 st.write("This is a chatbot that can answer questions related to PubMed articles. The default response type is targeted towards users with intermediate to advanced knowledge in the field of biomedicine. The initial buffering may take around 5 minutes.")
@@ -82,7 +93,9 @@ def load_ensemble_retriever(index_name, _elastic_vector_search):
 
 
 # buffer ensemble retriever for consecutive uses
-ensemble_retriever = load_ensemble_retriever(index_name, elastic_vector_search)
+ensemble_retriever = None
+if use_ensemble:
+    ensemble_retriever = load_ensemble_retriever(index_name, elastic_vector_search)
 
 
 def _parse(text):
@@ -105,26 +118,28 @@ llm = get_llm(model_id)
 
 
 @st.cache_resource
-def get_retrieval_chain(chain_type='unique_docs'):
+def get_retrieval_chain(chain_type='unique_docs',used_retriever=ensemble_retriever):
 
     if chain_type == "unique_docs":
         # Chain
         qa_chain = LLMChain(llm=llm, prompt=QA_PROMPT)
         return qa_chain
-
+    
     rag = RetrievalQA.from_chain_type(
         llm=llm,
         chain_type="stuff",
         verbose=True,
-        retriever=ensemble_retriever,
+        retriever=used_retriever,
         chain_type_kwargs={
             "verbose": True},
     )
     return rag
 
-
-rag = get_retrieval_chain("retrieval qa")
-
+rag = None
+if use_ensemble:
+    rag = get_retrieval_chain("retrieval qa")
+else:
+    rag = get_retrieval_chain("unique_docs",used_retriever=retriever)
 
 @st.cache_resource
 def get_rewrite_prompt():
@@ -177,22 +192,22 @@ def generate_response(input_text):
     logging.info(
         f"Original input: {input_text}. Transformed input: {rewritten_input_text}")
 
-    unfiltered_docs = ensemble_retriever.invoke(rewritten_input_text)
-    unformatted_docs = reduntant_filter.transform_documents(unfiltered_docs)
-    docs = [x.to_document() for x in unformatted_docs]
+    # unfiltered_docs = ensemble_retriever.invoke(rewritten_input_text)
+    # unformatted_docs = reduntant_filter.transform_documents(unfiltered_docs)
+    # docs = [x.to_document() for x in unformatted_docs]
 
-    out = qa_chain(
-        inputs={
-            "query": rewritten_input_text,
-            "contexts": "\n---\n".join([d.page_content for d in docs])
-        }
-    )
-    answer = out["text"]
-
+    # out = qa_chain(
+    #     inputs={
+    #         "query": rewritten_input_text,
+    #         "contexts": "\n---\n".join([d.page_content for d in docs])
+    #     }
+    # )
+    # answer = out["text"]
+    answer = rag(rewritten_input_text)   
     end_time = time.time()
     logging.info(
         f"Time taken to generate response: {end_time - start_time} seconds")
-    return answer
+    return answer['result']
 
 
 def generate_response_with_sources(input_text):
@@ -254,6 +269,9 @@ if prompt := st.chat_input():
     st.session_state.messages.append({"role": "user", "content": prompt})
     st.chat_message("user").write(prompt)
     # msg = generate_response(prompt)
-    msg = generate_response_with_sources(prompt)
+    if sourcing:
+        msg = generate_response_with_sources(prompt)
+    else:
+        msg = generate_response(prompt)
     st.session_state.messages.append({"role": "assistant", "content": msg})
     st.chat_message("assistant").write(msg)
