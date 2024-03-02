@@ -14,6 +14,7 @@ from langchain_community.llms import Ollama
 from langchain_community.document_transformers.embeddings_redundant_filter import *
 from langchain.chains import LLMChain
 import argparse
+from langchain.chains.query_constructor.base import AttributeInfo
 
 st.set_page_config(page_title="💬 PubMed ChatBot")
 
@@ -31,6 +32,29 @@ def get_argparser():
     return argparser.parse_args()
 
 argparser = get_argparser()
+
+metadata_field_info = [
+    AttributeInfo(
+        name="publication_date",
+        description="This is the publication date of the article. It is formatted as a string in the format DD/MM/YYYY",
+        type="string",
+    ),
+    AttributeInfo(
+        name="title",
+        description="This is the title of the article. It is formatted as a string",
+        type="string",
+    ),
+    AttributeInfo(
+        name="id",
+        description="This is the id of the article.",
+        type="integer",
+    ),
+    # # AttributeInfo(
+    # #     name="authors", description="A 1-10 rating for the movie", type="float" ## HACK: here the authors is a list of strings
+    # ),
+]
+
+document_content_description = "Medical scientific article"
 
 load_dotenv()  # take environment variables from .env.
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
