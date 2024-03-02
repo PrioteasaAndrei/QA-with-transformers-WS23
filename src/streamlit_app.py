@@ -38,7 +38,7 @@ metadata_field_info = [
     AttributeInfo(
         name="publication_date",
         description="This is the publication date of the article. It is formatted as a string in the format DD/MM/YYYY",
-        type="string",
+        type="date",
     ),
     AttributeInfo(
         name="title",
@@ -148,6 +148,7 @@ def get_self_query_retriever():
         elastic_vector_search,
         document_content_description,
         metadata_field_info,
+        
     )
     return retriever
 

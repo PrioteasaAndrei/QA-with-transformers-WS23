@@ -5,7 +5,7 @@ A user-friendly QA system designed to answer questions on medical data concernin
 **Team Members**
 - Cristi Andrei Prioteasa (cristi.prioteasa@stud.uni-heidelberg.de) - 4740844, Master Data and Computer Science, Heidelberg University.
 - Mara-Eliana Popescu (mara-eliana.popescu@stud.uni-heidelberg.de) - 4166979, Master of Data and Computer Science, Heidelberg University.
-- Alper Dağgez (ro312@stud.uni-heidelberg.de) - (matriculation number), Master of Data and Computer Science, Heidelberg University.
+- Alper Dağgez (ro312@stud.uni-heidelberg.de) - 4732226, Master of Data and Computer Science, Heidelberg University.
 
 **Previous Team Member:** Tarik Mistura Arcoverde Cavalcanti
 
@@ -122,8 +122,6 @@ The quality of the retrieved documents is also highly influenced by the quality 
 
 To address these problems, we adopted the [Rewrite-Retrieve-Read](https://arxiv.org/pdf/2305.14283.pdf?ref=blog.langchain.dev) approach to transform the user's query. To put it in a nutshell, our system first prompts a LLM to rewrite the query and then uses the rewritten query to retrieve relevant documents.
 
-(Multi Query Retrieval ?)
-
 ### Response Generation
 
 Currently, our system relies on OpenAI's model `gpt-3.5-turbo` to generate the answer using the rewritten query and the retrieved documents. In our experiments we also employed Meta's `llama2` model with 7B parameters and 4-bit quantization, provided through [Ollama](https://ollama.com/). In the end we settled for the former model to be able to host our QA system on [Streamlit Community Cloud](https://streamlit.io/cloud). If the user wants to test our system in a local environment, it is possible to switch from `gpt-3.5-turbo` to `llama2`. The two LLM's are comparable in terms of performance.
@@ -138,11 +136,23 @@ Since the response generation relies on multiple documents, we deemed it necessa
 
 ### Evaluation Methods
 
+We used [Ragas](https://docs.ragas.io/en/stable/) to evaluate our entire QA system. First we created a synthetic test dataset with Ragas containing 67 rows with the following data fields:
+- `question`
+- `context`
+- `answer` (the ground-truth answer)
+- `question_type`
+- `episode_done`
 
+Next, we run all 67 questions from the test dataset through our system, add the generated answers under a new data field to the test dataset and evaluate the following metrics on the resulting dataset:
+
+- `context precision` measures the signal-to-noise ratio of the retrieved context ([definition](https://docs.ragas.io/en/stable/concepts/metrics/context_precision.html)).
+- `context recall` measures if all the relevant information required to answer the question was retrieved ([definition](https://docs.ragas.io/en/stable/concepts/metrics/context_recall.html)).
+- `answer relevancy` measures how relevant the generated answer is to the question ([definition](https://docs.ragas.io/en/stable/concepts/metrics/answer_relevance.html)).
 
 ### User Interface
 
-By using caching of the embedding model and db connection,  we were able to decrease the answer time from 15.785237812311 seconds to 3.9000279903411865 seconds.
+To make our QA system more user-friendly we added a user interface made with [streamlit](https://streamlit.io/). One major advantage of using streamlit is the [caching machanism](https://docs.streamlit.io/library/advanced-features/caching), which makes the system run much faster and helps with persisting objects across reruns.
+By using caching of the embedding model, the vectorstore, the document retriever and the generative model, we were able to decrease the answer time significantly.
 
 ## Experimental Setup and Results
 RAGAs validation metrics for Sentence Transformer 400 chunking, no ensemble retriever, read-write-retrieve query transformation, Chat GPT 3.5. Turbo for both the rewritter and generation part, pubmedbert embeddings.
