@@ -24,7 +24,7 @@ logging.basicConfig(filename='query_transformation.log', level=logging.DEBUG,
 @st.cache_resource
 def get_argparser():
     argparser = argparse.ArgumentParser(description="Chatbot for PubMed articles")
-    argparser.add_argument("--model_id", type=str, default="llama2",help="Model ID for the language model. Can be either llama2 or openai.")
+    argparser.add_argument("--model_id", type=str, default="openai",help="Model ID for the language model. Can be either llama2 or openai.")
     argparser.add_argument("--index_name", type=str, default="pubmedbert-sentence-transformer-100", help="Index name for the ElasticSearch database. Options are  pubmedbert-sentence-transformer-100, pubmedbert-sentence-transformer-200, pubmedbert-sentence-transformer-400, pubmedbert-recursive-character-400-overlap-50.")
     return argparser.parse_args()
 
@@ -196,11 +196,10 @@ def generate_response(input_text):
 
 
 def generate_response_with_sources(input_text):
-    llm = Ollama(model=model_id)
 
     # Rewrite the input text
     rewrite_prompt = hub.pull("langchain-ai/rewrite")
-    rewrite_llm = ChatOpenAI(temperature=0, openai_api_key=OPENAI_API_KEY)
+    rewrite_llm = llm
     rewriter = rewrite_prompt | rewrite_llm | StrOutputParser() | _parse
     rewritten_input_text = rewriter.invoke({"x": input_text})
     logging.info(
@@ -231,7 +230,7 @@ def generate_response_with_sources(input_text):
         doc_strings = [format_document(doc, document_prompt) for doc in docs]
         return document_separator.join(doc_strings)
 
-    retriever = elastic_vector_search.as_retriever(search_kwargs={"k": 3})
+    retriever = elastic_vector_search.as_retriever(search_kwargs={"k": 30})
 
     _context = {
         "context": retriever | _combine_documents,
@@ -254,6 +253,7 @@ for msg in st.session_state.messages:
 if prompt := st.chat_input():
     st.session_state.messages.append({"role": "user", "content": prompt})
     st.chat_message("user").write(prompt)
-    msg = generate_response(prompt)
+    # msg = generate_response(prompt)
+    msg = generate_response_with_sources(prompt)
     st.session_state.messages.append({"role": "assistant", "content": msg})
     st.chat_message("assistant").write(msg)
