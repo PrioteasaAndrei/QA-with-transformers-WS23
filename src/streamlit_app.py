@@ -26,7 +26,7 @@ def get_argparser():
     argparser = argparse.ArgumentParser(description="Chatbot for PubMed articles")
     argparser.add_argument("--model_id", type=str, default="openai",help="Model ID for the language model. Can be either llama2 or openai.")
     argparser.add_argument("--index_name", type=str, default="pubmedbert-sentence-transformer-100", help="Index name for the ElasticSearch database. Options are  pubmedbert-sentence-transformer-100, pubmedbert-sentence-transformer-200, pubmedbert-sentence-transformer-400, pubmedbert-recursive-character-400-overlap-50.")
-    argparser.add_argument('--sourcing', type=bool, default=False, help='Whether to include sources in the response. Default is False. If True, the response will include sources.')
+    argparser.add_argument('--sourcing', type=bool, default=True, help='Whether to include sources in the response. Default is False. If True, the response will include sources.')
     argparser.add_argument('--use_ensemble', type=bool, default=False, help='Use ensemble retriever.')
     return argparser.parse_args()
 
@@ -224,7 +224,7 @@ def generate_response_with_sources(input_text):
     ANSWER_PROMPT = ChatPromptTemplate.from_template(
         """
         You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. If you don't know the answer, just say that you don't know. Be as verbose and educational in your response as possible. 
-        Each passage has a SOURCE which is the title of the document. When answering, cite source name of the passages you are answering from below the answer, on a new line, with a prefix of "SOURCE:".
+        Each passage has a SOURCE_TITLE which is the title of the document and a SOURCE_PUBLICATION_DATE which is the publication date of the document. When answering, cite source name of the passages you are answering from below the answer, on a new line, with a prefix of "SOURCE:". Make your answer as concise as possible. Not more than 100 words.
 
 
         context: {context}
@@ -236,7 +236,8 @@ def generate_response_with_sources(input_text):
     DOCUMENT_PROMPT = PromptTemplate.from_template(
         """
         ---
-        SOURCE: {title}
+        SOURCE_TITLE: {title}
+        SOURCE_PUBLICATION_DATE: {publication_date}
         {page_content}
         ---
         """

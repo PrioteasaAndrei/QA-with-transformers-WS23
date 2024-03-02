@@ -223,3 +223,6 @@ TODO:
     Workaround: filter documents based on cosine similairty in rag pipeline. Ideal would be to eliminate duplicates from index
 
 PROBLEM: model generates from own parameters and not template
+
+02 March 2024
+- Put default of sourcing to False!!!
