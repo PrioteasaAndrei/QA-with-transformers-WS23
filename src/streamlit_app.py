@@ -118,28 +118,29 @@ llm = get_llm(model_id)
 
 
 @st.cache_resource
-def get_retrieval_chain(chain_type='unique_docs',used_retriever=ensemble_retriever):
-
+def get_retrieval_chain(chain_type='unique_docs', without_ensemble=True):
+    global retriever
     if chain_type == "unique_docs":
         # Chain
         qa_chain = LLMChain(llm=llm, prompt=QA_PROMPT)
         return qa_chain
+    chain_retriever = None
+    if without_ensemble:
+        chain_retriever = retriever
+    else:
+        chain_retriever = ensemble_retriever
     
     rag = RetrievalQA.from_chain_type(
         llm=llm,
         chain_type="stuff",
         verbose=True,
-        retriever=used_retriever,
+        retriever=chain_retriever,
         chain_type_kwargs={
             "verbose": True},
     )
     return rag
 
-rag = None
-if use_ensemble:
-    rag = get_retrieval_chain("retrieval qa")
-else:
-    rag = get_retrieval_chain("unique_docs",used_retriever=retriever)
+rag = get_retrieval_chain("retrieval qa", without_ensemble=not use_ensemble)
 
 @st.cache_resource
 def get_rewrite_prompt():
