@@ -1,0 +1,17 @@
+## Infrastructure
+This directory contains the information about infrastructure aspects including Github/Colab integration, containerization with Docker, using Google Cloud based Elasticsearch and hosting on cloud which are all **had been agreed as a team** to include as project components. Due to changes in the models (happened lately) my commits deleted from main branch by rebasing. Their reasoning was "Project is complete and no point to include them." Please refer PR history. To resolve this disagreement and reach consensus, we agreed to present separetly. I have to keep my code in this branch because my commits in main branch gets rebased. Our tutor has been informed about the team decision.
+
+- I deployed Github actions which can transfer files from Github to Google Colab (Google Drive) and vice versa. Its main purpose was making easy experimentation with multiple hyperparameters. For authentication, it uses a service account configured with required permissions in Google Cloud.
+- For vector database operations, I searched ways to host elastic cloud to overcome 2 weeks trial period when our system would be evaluated. I found integration of it with Google Cloud and made a deployment with it. Google Cloud allows user to maintain billing from free tier credits. Basically we were able to use Elastic Cloud as if using as paid user but payments are done by google cloud free tier credits.
+- I put effort to dockerize the app for make it reproducible. It can successfully run docker container by loading dependencies, caching the models, authorize user specifically for caching llama model by in-container github secret manager. 
+- I worked on Google Cloud based hosting. All firewall/networking and related cloud work is established. Main problem was about free tier credits which were forbidden to be used to equip server with GPU. I used one primitive virtual machine (VM) to host a Django server, exposed endpoint to dynamically stop and run another VM instance with higher specs so that we can get advantage in terms of pricing. By doing that, system will only be obliged to pay for disk space, static ip of powerful instance and whole specs of the less powerful instance.
+- I preferred preconfigure the instance instead of launching by Terraform to create less overhead during startup.
+- To dynamically start the instance, a simple sqlite database is used to store session ids. First, I update the startup script in following structure
+
+```
+#! /bin/bash
+docker start b308018212ec
+gcloud compute instances add-tags {INSTANCE_NAME} --tags=session-{SESSION_ID} --impersonate-service-account={SERVICE_ACCOUNT_EMAIL} --zone={ZONE} 
+```
+
+- In the script above first line serves to run the Docker container on start. Second line which adds tag to VM was necessary to test if **docker start CONTAINER_ID** line has returned. Unfortunately, Google Cloud python client was employing async API and it returns regardless of completion of startup script. Code performs polling to resolve the state of startup script. After that, it redirects user to app.
