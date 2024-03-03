@@ -26,24 +26,35 @@ John Ziegler (ziegler@informatik.uni-heidelberg.de)
 </details>
 
 ## Getting Started
-Use the following command to start the app:
+Make sure you have [Anaconda](https://www.anaconda.com/download) installed.
+Use the following commands to create the proper environment, activate it and start the app:
 
 ```
 conda env create -f environment.yml
-python -m streamlit run src/streamlit_app.py
+conda activate nlp
+streamlit run src/streamlit_app.py
+```
+You can pass the following flags to the `streamlit run` command:
+- `model_id` selects the generative model. The value can be `openai` or `llama2`.
+- `index_name` selects the index on Elastic Cloud. The following values can be passed:
+  - `pubmedbert-sentence-transformer-100`
+  - `pubmedbert-sentence-transformer-200`
+  - `pubmedbert-sentence-transformer-400`
+  - `pubmedbert-recursive-character-400-overlap-50`
+- `sourcing` tells the system if sources should be included (then set it to `True`) or not (set it to `False`).
+- `use_ensemble` tells the system if the ensemble_retriever should be used (then set it to `True`) or not (set it to `False`).
+
+Default command from above is equivalent to:
+```
+streamlit run .\src\streamlit_app.py --model_id openai --index_name pubmedbert-sentence-transformer-100  --sourcing False --use_ensemble False
 ```
 
-model_id can be: [openai, llama2]
-index_name can be:  [pubmedbert-sentence-transformer-100, pubmedbert-sentence-transformer-200, pubmedbert-sentence-transformer-400, pubmedbert-recursive-character-400-overlap-50]
-```
-streamlit run .\src\streamlit_app.py -- --model_id model_id --index_name index_name  --sourcing False/True --use_ensemble False/True
-```
-pubmed-sentence-transformer-100
-Make sure port 8501 is not used by another process.
-Local URL: http://localhost:8501
+Make sure port 8501 is not used by another process. \
+Local URL: http://localhost:8501 \
 Network URL: http://147.142.152.35:8501
 
-Note: the Ensemble Retriever (https://python.langchain.com/docs/modules/data_connection/retrievers/ensemble) used by the IR component (BM25 retriever + dense retriever) takes about 5 minutes to load some of the data in memory. This is because, by default, the langchain BM25 retriever can only hold the documents in memory and writing them to disk for retrieval is not trivial. After posing a question expect an inference time of 1-5 minutes.
+**Note**: the [Ensemble Retriever](https://python.langchain.com/docs/modules/data_connection/retrievers/ensemble) takes about 5 minutes to load some of the data in memory. This is because, by default, the langchain BM25 retriever can only hold the documents in memory and writing them to disk for retrieval is not trivial.\
+After posing a question expect an inference time of 1-5 minutes.
 
 ## Introduction
 With the recent advancements of Large Language Models (LLMs) interest in domain-specific applications powered by LLMs has increased. In particular, language models can assist experts in the medical domain most commonly by answering questions against a knowlegde base.
@@ -130,16 +141,16 @@ We faced certain problems at this stage of our project like resource limitations
 
 ### Reference Sources 
 
-Since the response generation relies on multiple documents, we deemed it necessary that our system accurately back-references the used sources. To this end we extended the prompt template to ask the generative LLM to cite the retrieved documents using the stored metadata. More specifically, each answer will contain at the end a list of sources as in the following example:
+Since the response generation relies on multiple documents, we deemed it necessary that our system accurately back-references the used sources. To this end we extended the prompt template to ask the generative LLM to cite the retrieved documents using the stored metadata. More specifically, each answer will contain a list of sources similar to what we see in following example:
 
 ![Image](images/source_tracing.png)
 
 ### Evaluation Methods
 
 We used [Ragas](https://docs.ragas.io/en/stable/) to evaluate our entire QA system. First we created a synthetic test dataset with Ragas containing 67 rows with the following data fields:
-- `question`
-- `context`
-- `answer` (the ground-truth answer)
+- `question` (generated with the default LLM of Ragas)
+- `context` (containing the documents returned by our retriever)
+- `answer` (the ground-truth answer generated with the default LLM of Ragas)
 - `question_type`
 - `episode_done`
 
@@ -148,6 +159,8 @@ Next, we run all 67 questions from the test dataset through our system, add the 
 - `context precision` measures the signal-to-noise ratio of the retrieved context ([definition](https://docs.ragas.io/en/stable/concepts/metrics/context_precision.html)).
 - `context recall` measures if all the relevant information required to answer the question was retrieved ([definition](https://docs.ragas.io/en/stable/concepts/metrics/context_recall.html)).
 - `answer relevancy` measures how relevant the generated answer is to the question ([definition](https://docs.ragas.io/en/stable/concepts/metrics/answer_relevance.html)).
+
+More on the evaluation results and the exact configurations we evaluated is described in the section [Experimental Setup and Results](#experimental-setup-and-results).
 
 ### User Interface
 
