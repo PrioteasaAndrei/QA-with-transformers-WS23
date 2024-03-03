@@ -1,37 +1,17 @@
-# QA-with-transformers-WS23
-This is the final project for the Course NLP with Transformers of Univeristy of Heidelberg, Msc. Data and Computer Science, WS23/24
+## Infrastructure
+This directory contains the information about infrastructure aspects including Github/Colab integration, containerization with Docker, using Google Cloud based Elasticsearch and hosting on cloud which are all **had been agreed as a team** to include as project components. Due to changes in the models (happened lately) my commits deleted from main branch by rebasing. Their reasoning was "Project is complete and no point to include them." Please refer PR history. To resolve this disagreement and reach consensus, we agreed to present separetly. I have to keep my code in this branch because my commits in main branch gets rebased. Our tutor has been informed about the team decision.
 
-Model: https://huggingface.co/microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract     -----   https://huggingface.co/microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract-fulltext
-QA dataset (possible): https://pubmedqa.github.io/
+- I deployed Github actions which can transfer files from Github to Google Colab (Google Drive) and vice versa. Its main purpose was making easy experimentation with multiple hyperparameters. For authentication, it uses a service account configured with required permissions in Google Cloud.
+- For vector database operations, I searched ways to host elastic cloud to overcome 2 weeks trial period when our system would be evaluated. I found integration of it with Google Cloud and made a deployment with it. Google Cloud allows user to maintain billing from free tier credits. Basically we were able to use Elastic Cloud as if using as paid user but payments are done by google cloud free tier credits.
+- I put effort to dockerize the app for make it reproducible. It can successfully run docker container by loading dependencies, caching the models, authorize user specifically for caching llama model by in-container github secret manager. 
+- I worked on Google Cloud based hosting. All firewall/networking and related cloud work is established. Main problem was about free tier credits which were forbidden to be used to equip server with GPU. I used one primitive virtual machine (VM) to host a Django server, exposed endpoint to dynamically stop and run another VM instance with higher specs so that we can get advantage in terms of pricing. By doing that, system will only be obliged to pay for disk space, static ip of powerful instance and whole specs of the less powerful instance.
+- I preferred preconfigure the instance instead of launching by Terraform to create less overhead during startup.
+- To dynamically start the instance, a simple sqlite database is used to store session ids. First, I update the startup script in following structure
 
-Pretrain for QA.
+```
+#! /bin/bash
+docker start b308018212ec
+gcloud compute instances add-tags {INSTANCE_NAME} --tags=session-{SESSION_ID} --impersonate-service-account={SERVICE_ACCOUNT_EMAIL} --zone={ZONE} 
+```
 
-DB: Opensearch
-
-Questions:
-  - Where to run OpenSearch? Asure or AWS free trials and run it there
-  - What is the point of paragraphing the document if the average abstract size (in tokens) is 220? Does that mean that a single embedding for the whole paragraph cannot be used for STS? whatever
-  - Are we allowed to use other data such as metadata, document content etc? Yes
-
-First Task: DB
-  1. Find appropiate way to represent documents (\n, paragraphs, find right size for the documents etc.) - trial and error
-  2. Do information retrieval based on semantic search that retrieves the right paragraphs at first. (extraction QA)
-
-
-First Mileston: 11th January
-  - need data
-  - opensearch working (extractive QA)
-
-Final Deadline: 4th March
-
-**************
-
-Dataset: https://huggingface.co/datasets/prio7777777/pubmed-demo
-
-**************
-Milestone 2
-**************
-
-See this for a hybrid search query: https://gist.github.com/ManZzup/1109d4c1f6b8bc48b60a67983dfbd0fd
-See this for one end-to-end evaluation framework: https://github.com/explodinggradients/ragas
-See this for tutorial to ragas: https://towardsdatascience.com/evaluating-rag-applications-with-ragas-81d67b0ee31a
+- In the script above first line serves to run the Docker container on start. Second line which adds tag to VM was necessary to test if **docker start CONTAINER_ID** line has returned. Unfortunately, Google Cloud python client was employing async API and it returns regardless of completion of startup script. Code performs polling to resolve the state of startup script. After that, it redirects user to app.
