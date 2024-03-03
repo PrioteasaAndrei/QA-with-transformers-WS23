@@ -1,5 +1,4 @@
 from django.shortcuts import render, redirect
-from django.http import HttpResponse, HttpRequest
 import googleapiclient.discovery
 from google.oauth2 import service_account
 import json 
@@ -8,47 +7,48 @@ import os
 from chatbox_app.serializers import SessionSerializer
 import time
 from dotenv import load_dotenv
-load_dotenv()
+from google.cloud import compute_v1
+from django.views.decorators.cache import never_cache
 
+@never_cache
 def home(request):
     return render(request, 'home.html')
 
+@never_cache
 def close_instance(request):
+    load_dotenv()
     creds = service_account.Credentials.from_service_account_info(json.loads(os.getenv('CLOUD_CONFIG')))
     compute = googleapiclient.discovery.build('compute', 'v1', credentials=creds)
-    project = os.getenv('PROJECT')
-    zone = os.getenv('ZONE')
-    instance = os.getenv('INSTANCE')
+    project, zone, instance = os.getenv('PROJECT'), os.getenv('ZONE'), os.getenv('INSTANCE')
     compute.instances().stop(project=project, zone=zone, instance=instance).execute()
-    render(request, 'close_instance.html')
+    return render(request, 'close_instance.html')
 
-
+@never_cache
 def room(request):
+    load_dotenv()
     creds = service_account.Credentials.from_service_account_info(json.loads(os.getenv('CLOUD_CONFIG')))
     compute = googleapiclient.discovery.build('compute', 'v1', credentials=creds)
     
-    project = os.getenv('PROJECT')
-    zone = os.getenv('ZONE')
-    instance = os.getenv('INSTANCE')
-    serializer = SessionSerializer(data = {})
+    project, zone, instance = os.getenv('PROJECT'), os.getenv('ZONE'), os.getenv('INSTANCE')
 
+    result = compute.instances().get(project=project, zone=zone, instance=instance).execute()
+    latest_session_id = SessionSerializer(Session.objects.latest("id"), many=False).data["id"]
+    if result["status"] == "RUNNING" and f"session-{latest_session_id}" in result["tags"]["items"]:
+        return redirect(f"http://{os.getenv('INSTANCE_IP')}:8501")
+    
+    serializer = SessionSerializer(data = {})    
     if(serializer.is_valid()):
         serializer.save()
 
-    startup_script = open(
-        os.path.join(os.path.dirname(__file__), "startup-script.sh")
-    ).read()
-
+    startup_script = open(os.path.join(os.path.dirname(__file__), "startup-script.sh")).read()
     latest_session_id = SessionSerializer(Session.objects.latest("id"), many=False).data["id"]
 
-    result = compute.instances().get(project=project, zone=zone,
-                                 instance=instance).execute()
     fingerprint = result["metadata"]["fingerprint"]
     kind = result["metadata"]["kind"]
     body = {
     "items": [{
         "key": "startup-script",
-        "value": startup_script.format(latest_session_id, json.loads(os.getenv('CLOUD_CONFIG'))["client_email"]),
+        "value": startup_script.format(instance, latest_session_id, json.loads(os.getenv('CLOUD_CONFIG'))["client_email"], zone),
     }],
     "kind": kind,
     "fingerprint": fingerprint
@@ -56,19 +56,11 @@ def room(request):
 
     compute.instances().setMetadata(project=project, zone=zone, instance=instance, body=body).execute()
     response = compute.instances().start(project=project, zone=zone, instance=instance).execute()
-    # Polling is required for both checking if instance has been launched and startup script has been returned
-    # It is also the used method in google documentation
-    for i in range(20):
-        result = compute.zoneOperations().get(
-            project=project,
-            zone=zone,
-            operation=response["id"]).execute()
-
-        if result['status'] == 'DONE':
-            if 'error' in result:
-                raise Exception(result['error'])
-            break
-        time.sleep(1)
+    # Following lines only waits instance to be start 
+    kwargs = {"project": project, "operation": response["name"], "zone": response["zone"].rsplit("/", maxsplit=1)[1]}
+    client = compute_v1.ZoneOperationsClient(credentials=creds)
+    client.wait(**kwargs)
+    # Polling is required for checking if startup script has been returned. It is also the used method in google documentation
     
     for i in range(30):
         result = compute.instances().get(project=project, zone=zone, instance=instance).execute()
