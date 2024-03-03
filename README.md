@@ -190,7 +190,10 @@ Inference time using llama2 (Ollama) on a RTX 3050 Ti 4 GB VRAM , 16 GB RAM, I7 
 ## Conclusions and Future Work
 
 We conclude the following aspects about our work:
-- we have sucessfully built an end-to-end chat-bot using a RAG architecture on the pubmed articles which contain the keyword `intelligence` and answers questions in ...
+- we have sucessfully built an end-to-end chat-bot using a RAG architecture on the pubmed articles which contain the keyword `intelligence` and answers questions with a focus on precision rather than recall (targeted behaviour for sensitive content such as medical articles) 
+- we implemented a query transformation mechanism (Rewrite-Retrieve-Read) and investigated different approaches such as Multi Querying and Self Querying (not implemented in the final version)
+- we implemented target sourcing, where statements are cited with the article from which they are extracted / generated
+- we implemented a graphical interface using `streamlit` for easy interaction with the system
 - we have created an evaluation method for our pipeline, using `RAGAS` to generate a synthetic dataset using `GPT 3.5 Turbo` as a critic and generator. We include in our synthetic dataset different subtypes of questions such as simple, reasoning, multi-context and conditional.
 - using our synthethic dataset we investigated the influence of different hyperparameters as follows:
 
@@ -202,12 +205,35 @@ We conclude the following aspects about our work:
 
         - we compared two models for our generation component, llama2 (via Ollama) and GPT 3.5 Turbo (via OpenAI API). We concluded that GPT 3.5 Turbo is vastly superior to the llama2. 
 
+These results are available in the chunking_configuration and excel_configurations directors.
+
+During these experimtents a `max_retrieveal_limit` for the documents is set at *30*. We exported the synthetic generated testing set on [Huggingface](https://huggingface.co/datasets/prio7777777/pubmed_validation_chunking_400).
+
 In the current state the project has the following limitations, which will be adressed in future work:
 - querying after a specific date range is not bound to work (tests have shown use cases when the correct articles from that date range are returned and others when not)
 - does not support chat history (new queries do not take into account old queries)
-- 
+- the BM25 component of the ensemble retriever is hold in memory and is quite inneficient
+- sometimes the generator uses information from its parameters that cannot be directly inferred from the given articles the retrievel passest to the prompt
+- sourcing is not bound to work (in some tests only one article is cited in the generated answer and we cannot tell whether only that document has been used to answer the question or the sourcing is failing)
 
 For future work we propose the following improvements:
 - replacing the query augumentation mechanism with a MultiQuery retriever or a Step Back prompting retriever ([article](https://blog.langchain.dev/query-transformations/))
 - investigating the efficiency of a Self Query retriever in combination with a reranking / fusion mechanism
 - implementing history for our chat-bot
+- more thorough evaluation (*which was here limited because of the lack of computing resources*)
+
+
+## Contribution table
+
+A lot of the features where implemented during Peer Programing sessions, so it's hard to assign individual responsability to one team member.
+
+| Feature | Member(s) |
+|--------------------------|----|
+| Graphical Interface (streamlit app + caching + argparser) |[Mara](README.md#L7)|
+| IR component (querying, ensemble retriever, indexing and chunking) |[Andrei](README.md#L6)|
+| Generation Component |[Mara](README.md#L7) + [Andrei](README.md#L6)|
+| Query component (augumentation/transformation + sourcing) |[Mara](README.md#L7) + [Andrei](README.md#L6)|
+| Evaluation (generating the synthetic dataset) |[Mara](README.md#L7) + [Andrei](README.md#L6)|
+| Infrastructure |[Alper](README.md#L8)|
+| Data Acquisition |[Mara](README.md#L7) + [Andrei](README.md#L6)|
+| Testing different configurations (IR + generation) |[Mara](README.md#L7) + [Andrei](README.md#L6)|
