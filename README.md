@@ -137,7 +137,7 @@ Each index has the same underlying retrieval strategy, namely a [Hybrid ApproxRe
 The information retrieval component of our system is based on an [Ensemble Retriever](https://python.langchain.com/docs/modules/data_connection/retrievers/ensemble) combining the sparse retriever [BM25](https://python.langchain.com/docs/integrations/retrievers/bm25) with the hybrid retriever of our Elasticsearch index. The results of both retrievers are reranked using [Reciprocal Rank Fusion](https://plg.uwaterloo.ca/~gvcormac/cormacksigir09-rrf.pdf).
 Since the hybrid retrieval strategy of our Elasticsearch index already combines lexical and semantic search, the resulting ensemble retriever emphasizes the lexical search, which is a preferred strategy in the medical field where certain keywords cannot be semantically approximated through other words.
 
-Given an arbitrary query, our system retrieves the first $k=3$ documents that would be relevant for answer generation and passes them on to the generative component. 
+Given an arbitrary query, our system retrieves the first $k=30$ documents that would be relevant for answer generation and passes them on to the generative component. 
 We still need to experiment with the hyperparameter $k$.
 
 One peculiarity we noticed while evaluating this component of our system is that duplicates appear among the retrieved documents. This behaviour becomes worse upon increasing $k$. To solve this problem, we used an [EmbeddingsRedundantFilter](https://api.python.langchain.com/en/latest/document_transformers/langchain_community.document_transformers.embeddings_redundant_filter.EmbeddingsRedundantFilter.html), which identifies similar documents and filters out redundant content.
@@ -182,24 +182,71 @@ To make our QA system more user-friendly we added a user interface made with [st
 By using caching of the embedding model, the vectorstore, the document retriever and the generative model, we were able to decrease the answer time significantly.
 
 ## Experimental Setup and Results
+
+
 RAGAs validation metrics for Sentence Transformer 400 chunking, no ensemble retriever, read-write-retrieve query transformation, Chat GPT 3.5. Turbo for both the rewritter and generation part, pubmedbert embeddings.
 
-{'answer_relevancy': 0.8942793135767543,
- 'context_precision': 0.9253731342358208,
- 'context_recall': 0.9253731343283582,
- 'faithfulness': 0.825542328042328}
+We obtained the best results (on our synthetic validation dataset) using the following configuration: 
 
-configuration,answer_relevancy,context_precision,context_recall
-0,pubmedbert-sentence-transformer-100,0.8520767760246581,0.9253731342358208,0.9253731343283582
+| **Model**                    | GPT 3.5 Turbo                   |
+|------------------------------|--------------------------------|
+| **Chunking size**                 | 400 (50 overlap)                |
+| **Splitter**                 | Sentence Transformer|
+| **Ensemble Retriever**       | None |
+| **Query Transformation**    | Read-Write-Retrieve            |
+| **Rewriter and Generation**  | GPT 3.5 Turbo (Both Parts)              |
+| **Embeddings**               | PubMedBERT                     |
 
-we analyze the influence of the weight of the ensemble retriever (weight of BM25 retriever) in terms of Context Precision, which is defined as the signal to noise ratio of retrieved context. As we are using PubMed data and we want precise answers we will prioritize the Context Precision over Context Recall.
+Our results are as follows:
 
-context_precision:  0.8800,0.9200, 0.9200, 0.7899, 0.7564
-BM25 retriever weight: 0, 0.3, 0.5, 0.7, 1
+| **Metric**            | **Value**                    |
+|------------------------|------------------------------|
+| **Answer Relevancy**   | 0.89           |
+| **Context Precision**  | 0.92           |
+| **Context Recall**     | 0.92           |
+| **Faithfulness**       | 0.82           |
 
-Similar results are obtained with a weight of 0.5 or 0.3.
+For a description of the used metrics see [RAGAS](https://docs.ragas.io/en/latest/concepts/metrics/index.html).
 
-Inference time using llama2 (Ollama) on a RTX 3050 Ti 4 GB VRAM , 16 GB RAM, I7 10th generation, max_retrieved_docs = 50, used_tokens= 8295: 3 mins 53 seconds
+When running the previous configuration with a different index (**Chunking size 100, overlap 10**) we obtain the following results:
+
+
+| **Metric**            | **Value**                    |
+|------------------------|------------------------------|
+| **Answer Relevancy**   | 0.85           |
+| **Context Precision**  | 0.92           |
+| **Context Recall**     | 0.92           |
+
+Evaluation on different chunking mechanisms:
+
+| Index (spliiter-chunk size)                                  | Answer Relevancy | Context Precision | Context Recall |
+|-------------------------------------------------|------------------|---------------------|-----------------|
+| pubmedbert-sentence-transformer-50              | 0.87             | 0.93                | 0.93            |
+| pubmedbert-sentence-transformer-400             | 0.88             | 0.93                | 0.93            |
+| pubmedbert-recursive-character-400-overlap-50   | 0.91             | 0.93                | 0.93            |
+
+
+### Ensemble retriever influence
+We analyze the influence of the weight of the ensemble retriever (weight of BM25 retriever) in terms of Context Precision, which is defined as the signal to noise ratio of retrieved context. As we are using PubMed data and we want precise answers we will prioritize the Context Precision over Context Recall.
+
+| Context Precision     | BM25 Retriever Weight   |
+|------------------------|-------------------------|
+| 0.8800                 | 0                       |
+| 0.9200                 | 0.3                     |
+| 0.9200                 | 0.5                     |
+| 0.7899                 | 0.7                     |
+| 0.7564                 | 1                       |
+
+### Inference time
+
+| Hardware Specifications          | Inference Time  |
+|-----------------------------------|------------------|
+| GPU: RTX 3050 Ti (4 GB VRAM)      | 3 mins 53 seconds|
+| RAM: 16 GB                         |                  |
+| CPU: Intel Core i7 (10th Gen)     |                  |
+| Max Retrieved Docs: 50             |                  |
+| Used Tokens per query: 8295                  |                  |
+
 
 ## Conclusions and Future Work
 
@@ -234,12 +281,12 @@ For future work we propose the following improvements:
 - replacing the query augumentation mechanism with a MultiQuery retriever or a Step Back prompting retriever ([article](https://blog.langchain.dev/query-transformations/))
 - investigating the efficiency of a Self Query retriever in combination with a reranking / fusion mechanism
 - implementing history for our chat-bot
-- more thorough evaluation (*which was here limited because of the lack of computing resources*)
+- extend the testing dataset and incorporate more types of question e.g. with date filters or author filters (*which was here limited because of the lack of computing resources*)
 
 
 ## Contribution table
 
-A lot of the features where implemented during Peer Programing sessions, so it's hard to assign individual responsability to one team member.
+A lot of the features where implemented during Peer Programing sessions, so it's hard to assign individual responsability to one team member. Please see **langchain-test** branch for detailled explanation of infrastructure aspects. Reason of keeping them into separate branch is also explained there.
 
 | Feature | Member(s) |
 |--------------------------|----|
@@ -251,6 +298,7 @@ A lot of the features where implemented during Peer Programing sessions, so it's
 | Infrastructure |[Alper](README.md#L8)|
 | Data Acquisition |[Mara](README.md#L7) + [Andrei](README.md#L6)|
 | Testing different configurations (IR + generation) |[Mara](README.md#L7) + [Andrei](README.md#L6)|
+| Documentation |[Mara](README.md#L7) + [Andrei](README.md#L6) |
 
 
 ## References
