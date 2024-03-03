@@ -27,6 +27,9 @@ John Ziegler (ziegler@informatik.uni-heidelberg.de)
   </ul>
 </details>
 
+## Important Note
+**The current configuration uses the free trial of Elastic Cloud for hosting the indexes. The trial expires on the 12th of March, so setting up a new cloud is possible but we need a heads up of about 12hrs to reupload the indexes to the new cloud.**
+
 ## Getting Started
 Make sure you have [Anaconda](https://www.anaconda.com/download) installed.
 Use the following commands to create the proper environment, activate it and start the app:
