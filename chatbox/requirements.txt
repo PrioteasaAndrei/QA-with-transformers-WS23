@@ -1,0 +1,12 @@
+Django
+djangorestframework
+python-dotenv
+google
+google-api-core
+google-api-python-client
+google-auth
+google-auth-httplib2
+google-auth-oauthlib
+google-cloud
+google-cloud-compute
+googleapis-common-protos

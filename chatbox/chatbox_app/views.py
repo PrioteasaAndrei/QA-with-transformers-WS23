@@ -23,7 +23,6 @@ def close_instance(request):
     compute.instances().stop(project=project, zone=zone, instance=instance).execute()
     return render(request, 'close_instance.html')
 
-@never_cache
 def room(request):
     load_dotenv()
     creds = service_account.Credentials.from_service_account_info(json.loads(os.getenv('CLOUD_CONFIG')))
@@ -34,7 +33,7 @@ def room(request):
     result = compute.instances().get(project=project, zone=zone, instance=instance).execute()
     latest_session_id = SessionSerializer(Session.objects.latest("id"), many=False).data["id"]
     if result["status"] == "RUNNING" and f"session-{latest_session_id}" in result["tags"]["items"]:
-        return redirect(f"http://{os.getenv('INSTANCE_IP')}:8501")
+        return redirect(f"http://{os.getenv('INSTANCE_IP')}")
     
     serializer = SessionSerializer(data = {})    
     if(serializer.is_valid()):
@@ -62,10 +61,11 @@ def room(request):
     client.wait(**kwargs)
     # Polling is required for checking if startup script has been returned. It is also the used method in google documentation
     
-    for i in range(30):
+    for i in range(40):
+        print("try")
         result = compute.instances().get(project=project, zone=zone, instance=instance).execute()
         if f"session-{latest_session_id}" in result["tags"]["items"]:
-            return redirect(f"http://{os.getenv('INSTANCE_IP')}:8501") 
+            return redirect(f"http://{os.getenv('INSTANCE_IP')}") 
         time.sleep(1.5)
 
     return redirect("home")
