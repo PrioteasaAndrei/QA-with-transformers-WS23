@@ -289,7 +289,7 @@ For future work we propose the following improvements:
 
 ## Contribution table
 
-A lot of the features where implemented during Peer Programing sessions, so it's hard to assign individual responsability to one team member. Please see **langchain-test** branch for detailled explanation of infrastructure aspects. Reason of keeping them into separate branch is also explained there.
+A lot of the features where implemented during Peer Programing sessions, so it's hard to assign individual responsability to one team member. Please see infrastructure directory and **langchain-test** branch for detailled explanation of infrastructure aspects. **langchain-test** branch has the correct history of commits done for infrastructure. When they cherrypicked to main, commit times have been lost. Reason of keeping them into separate branch is also explained there.
 
 | Feature | Member(s) |
 |--------------------------|----|
