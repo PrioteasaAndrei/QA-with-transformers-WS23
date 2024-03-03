@@ -254,3 +254,8 @@ A lot of the features where implemented during Peer Programing sessions, so it's
 
 
 ## References
+- P. Lewis et al., Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks. 2021.
+- S. Es, J. James, L. Espinosa-Anke, and S. Schockaert, RAGAS: Automated Evaluation of Retrieval Augmented Generation. 2023.
+- V. Karpukhin et al., “Dense Passage Retrieval for Open-Domain Question Answering,” in Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP), Nov. 2020, pp. 6769–6781. doi: 10.18653/v1/2020.emnlp-main.550.
+- X. Ma, Y. Gong, P. He, H. Zhao, and N. Duan, Query Rewriting for Retrieval-Augmented Large Language Models. 2023.
+- Y. Gu et al., “Domain-Specific Language Model Pretraining for Biomedical Natural Language Processing,” ACM Transactions on Computing for Healthcare, vol. 3, no. 1, pp. 1–23, Oct. 2021, doi: 10.1145/3458754.
