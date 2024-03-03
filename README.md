@@ -225,7 +225,7 @@ For future work we propose the following improvements:
 
 ## Contribution table
 
-A lot of the features where implemented during Peer Programing sessions, so it's hard to assign individual responsability to one team member.
+A lot of the features where implemented during Peer Programing sessions, so it's hard to assign individual responsability to one team member. Please see **langchain-test** branch for detailled explanation of infrastructure aspects. Reason of keeping them into separate branch is also explained there.
 
 | Feature | Member(s) |
 |--------------------------|----|
