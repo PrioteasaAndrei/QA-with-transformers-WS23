@@ -1,11 +1,29 @@
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
 <h1>Welcome to Pubmed Chatbox Launcher</h1>
-<p>
-    <a href="/chatboxroom/">
-        Click to go chatboxroom
-    </a>
-</p>
-<p>
-    <a href="/close_instance/">
-        Click to stop chatbox instance
-    </a>
-</p>
+<div class="actionItems">
+    <p>
+        <a href="/chatboxroom/" onclick="openLoader()" >
+            Click to go chatboxroom
+        </a>
+    </p>
+</div>
+<div class="actionItems">
+    <p>
+        <a href="/close_instance/" onclick="openLoader()">
+            Click to stop chatbox instance
+        </a>
+    </p>
+</div>
+<div id="spinner" style="display: none;">
+    <img style = "height:50%; width: 100%;" src="/media/loader.gif" alt="Loading..."/>
+</div>
+<script>
+    function openLoader() {
+        document.getElementById("spinner").style.display = "block";
+        divs = document.getElementsByClassName("actionItems");
+        
+        for (let i = 0; i < divs.length; i++) {
+            divs[i].style.display = 'none';
+        }
+      }    
+</script>
