@@ -165,3 +165,26 @@ Similar results are obtained with a weight of 0.5 or 0.3.
 Inference time using llama2 (Ollama) on a RTX 3050 Ti 4 GB VRAM , 16 GB RAM, I7 10th generation, max_retrieved_docs = 50, used_tokens= 8295: 3 mins 53 seconds
 
 ## Conclusions and Future Work
+
+We conclude the following aspects about our work:
+- we have sucessfully built an end-to-end chat-bot using a RAG architecture on the pubmed articles which contain the keyword `intelligence` and answers questions in ...
+- we have created an evaluation method for our pipeline, using `RAGAS` to generate a synthetic dataset using `GPT 3.5 Turbo` as a critic and generator. We include in our synthetic dataset different subtypes of questions such as simple, reasoning, multi-context and conditional.
+- using our synthethic dataset we investigated the influence of different hyperparameters as follows:
+
+        - the influence of using an ensemble retriever and the influence  of the weight of the BM25 retriever
+        
+        - using different chunking sizes and text splitting mechanisms. We concluded that the best chunking mechanism is a Sentence Transformer with a chunking size of 100 and an overlap of 10
+
+        - we compared different prompting strategy, dealing with length of generated text and conciseneses
+
+        - we compared two models for our generation component, llama2 (via Ollama) and GPT 3.5 Turbo (via OpenAI API). We concluded that GPT 3.5 Turbo is vastly superior to the llama2. 
+
+In the current state the project has the following limitations, which will be adressed in future work:
+- querying after a specific date range is not bound to work (tests have shown use cases when the correct articles from that date range are returned and others when not)
+- does not support chat history (new queries do not take into account old queries)
+- 
+
+For future work we propose the following improvements:
+- replacing the query augumentation mechanism with a MultiQuery retriever or a Step Back prompting retriever ([article](https://blog.langchain.dev/query-transformations/))
+- investigating the efficiency of a Self Query retriever in combination with a reranking / fusion mechanism
+- implementing history for our chat-bot

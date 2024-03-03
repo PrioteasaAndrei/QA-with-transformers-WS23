@@ -50,9 +50,9 @@ metadata_field_info = [
         description="This is the id of the article.",
         type="integer",
     ),
-    # # AttributeInfo(
-    # #     name="authors", description="A 1-10 rating for the movie", type="float" ## HACK: here the authors is a list of strings
-    # ),
+    AttributeInfo(
+        name="authors", description="A list of the authors of the article", type="list[string]" 
+    ),
 ]
 
 document_content_description = "Medical scientific article"
@@ -149,7 +149,7 @@ def get_self_query_retriever():
         document_content_description,
         metadata_field_info,
     )
-    return retriever
+    return retriever ## TODO:https://stackoverflow.com/questions/76603178/self-querying-retrieval-in-langchain-returning-only-4-results
 
 ## TODO: initialize only if needed in argparser
 self_query_retriever = get_self_query_retriever()
