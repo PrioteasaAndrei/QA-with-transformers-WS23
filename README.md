@@ -22,8 +22,13 @@ John Ziegler (ziegler@informatik.uni-heidelberg.de)
     <li><a href="#methods">Methods</a></li>
     <li><a href="#experimental-setup-and-results">Experimental Setup and Results</a></li>
     <li><a href="#conclusions-and-future-work">Conclusions and Future Work</a></li>
+    <li><a href="#contribution-table">Contribution table</a></li>
+    <li><a href="#references">References</a></li>
   </ul>
 </details>
+
+## Important Note
+**The current configuration uses the free trial of Elastic Cloud for hosting the indexes. The trial expires on the 12th of March, so setting up a new cloud is possible but we need a heads up of about 12hrs to reupload the indexes to the new cloud.**
 
 ## Getting Started
 Make sure you have [Anaconda](https://www.anaconda.com/download) installed.
@@ -66,6 +71,18 @@ Furthermore, we evaluate the performance of our system by using a custom designe
 The [Methods](#methods) section gives an extensive account of our approach covering especially data acquisition and preprocessing, embedding and storing of the corresponding vectors, document retrieval from a given query, answer generation and much more.
 
 ## Related Work
+
+In application domains like biomedicine, past work has shown that using in-domain text can provide additional gains over general-domain language models. In particular, [Gu, Tinn, Cheng, et al., (2021)](https://arxiv.org/pdf/2007.15779.pdf) have shown that domain-specific pretraining serves as a solid foundation for a wide range of biomedical
+NLP tasks, leading to state-of-the-art results. Their [BiomedBERT](https://microsoft.github.io/BLURB/models.html) models were pretrained exclusively on medical data from Pubmed and currently score high in the [Biomedical Language Understanding and Reasoning Benchmark](https://microsoft.github.io/BLURB/). The BiomedBERT base models are not suitable for complex QA tasks and on data published after the models were last trained. 
+However, [PubMedBERT Embeddings](https://huggingface.co/NeuML/pubmedbert-base-embeddings), finetuned on BiomedBERT to produce high quality embeddings, has drawn our attention as being particularly suitable as a foundation for our QA system.
+
+The relatively small number of documents in our dataset and the absence of a proper format for the question answering task indicated that a QA system based on a Retrieval Augmented Generation pipeline would be most effective. Furthermore, previous work has proven that incorporating external knowledge (i.e., non-parametric knowledge) with internal knowledge (i.e., parametric knowledge) can alleviate hallucination.
+To the best of our knowledge, no QA system based on Retrieval Augmented Generation (RAG), makes use of the PubMedBERT Embeddings in the text retrieval component to generate answers to queries on Pubmed data. 
+
+Many existing RAG based systems use a retrieve-then-read strategy ([Lewis et al., (2020)](https://proceedings.neurips.cc/paper/2020/hash/6b493230205f780e1bc26945df7481e5-Abstract.html), [Karpukhin et al., (2020)](https://aclanthology.org/2020.emnlp-main.550/)), where relevant documents are first selected and then passed on to a large language model as external contexts to generate an answer. The significant limitation of such systems is the inevitable "gap between the input text and the knowledge that is really needed to query". To solve this issue, we adopted the rewrite-retrieve-read strategy introduced by [Ma et al., (2023)](https://arxiv.org/pdf/2305.14283.pdf?ref=blog.langchain.dev) . This new module uses and additional rewrite step in which the initial query is transformed before the retrieval and generation step. 
+
+Evaluating RAG architectures is challenging because there are several aspects to
+consider such as the ability of the retrieval system to identify relevant and focused context passages or the quality of the generation. At the same time, evaluating the correctness of generated answers is difficult in specialized fields and in the absence of ground-truth answers. To evaluate and ensure the quality of our QA system, we use the RAGAS evaluation framework, introduced by [Es et al., (2023)](https://arxiv.org/pdf/2309.15217.pdf), which leverages LLMs to create "ground-truth" answers and evaluates several components of the entire system.
 
 ## Methods
 Our pipeline consists of the following stages:
@@ -285,3 +302,11 @@ A lot of the features where implemented during Peer Programing sessions, so it's
 | Data Acquisition |[Mara](README.md#L7) + [Andrei](README.md#L6)|
 | Testing different configurations (IR + generation) |[Mara](README.md#L7) + [Andrei](README.md#L6)|
 | Documentation |[Mara](README.md#L7) + [Andrei](README.md#L6) |
+
+
+## References
+- P. Lewis et al., Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks. 2021.
+- S. Es, J. James, L. Espinosa-Anke, and S. Schockaert, RAGAS: Automated Evaluation of Retrieval Augmented Generation. 2023.
+- V. Karpukhin et al., “Dense Passage Retrieval for Open-Domain Question Answering,” in Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP), Nov. 2020, pp. 6769–6781. doi: 10.18653/v1/2020.emnlp-main.550.
+- X. Ma, Y. Gong, P. He, H. Zhao, and N. Duan, Query Rewriting for Retrieval-Augmented Large Language Models. 2023.
+- Y. Gu et al., “Domain-Specific Language Model Pretraining for Biomedical Natural Language Processing,” ACM Transactions on Computing for Healthcare, vol. 3, no. 1, pp. 1–23, Oct. 2021, doi: 10.1145/3458754.
