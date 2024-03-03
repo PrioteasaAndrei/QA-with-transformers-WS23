@@ -26,9 +26,7 @@ RUN --mount=type=secret,id=mysecret \
   && sh ./git_configure.sh
 RUN git clone https://huggingface.co/meta-llama/Llama-2-7b-chat-hf ./src/Llama-2-7b-chat-hf
 
-# RUN python ./utils/download_models.py
  
-# TODO port expose
-# TODO build
+EXPOSE 8501
 
-CMD python -m streamlit run ./src/streamlit_app.py
+CMD python -m streamlit run src/streamlit_app.py --server.port=8501 --server.address=0.0.0.0
