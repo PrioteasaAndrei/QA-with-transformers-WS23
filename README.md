@@ -12,6 +12,8 @@ A user-friendly QA system designed to answer questions on medical data concernin
 **Advisor:**
 John Ziegler (ziegler@informatik.uni-heidelberg.de)
 
+**Anti-plagiarism Confirmation:** We declare that what has been written in this work has been written by the members of Group 7 and that, with the exception of quotations, no part has been copied from scientific publications, the Internet or from research works already presented in the academic field.
+
 <!-- TABLE OF CONTENTS -->
 <details>
   <summary>Table of Contents</summary>
